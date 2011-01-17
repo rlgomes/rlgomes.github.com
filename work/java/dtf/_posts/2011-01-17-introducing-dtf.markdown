@@ -26,4 +26,4 @@ from a single machine using an XML format to describe your setup.
 
 With all of this the best thing to do is to start by reading the documentation 
 written for those interested in DTF and to start really digging in to what DTF 
-can do for you. DTF's documentation can be found here: {{ links.dtf.wiki }}
+can do for you. DTF's documentation can be found here: https://github.com/rlgomes/dtf/wiki
