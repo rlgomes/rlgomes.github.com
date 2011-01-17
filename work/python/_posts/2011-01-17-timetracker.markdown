@@ -5,7 +5,7 @@ published: true
 categories: [tracking, python, monitor]
 ---
 
-Been working on a time tracking utitliy for a while now and made timetracker to
+Been working on a time tracking utitliy for a while now and made [timetracker](http://github.com/rlgomes/timetracker) to
 basically track what I do on a daily basis on my gnome desktop. From being able
 to tell when I'm chatting with a friend to on the web doing social interactions
 on facebook or twitter. The application works very well for me and has been 
@@ -21,12 +21,12 @@ task changes per day and was really having issues keeping up. I filed a bug
 the hopes that gets fixed in the future. Meanwhile the default tracker is the 
 toggl tracker. 
 
-[Toggl][http://www.toggl.com] offers a free account for tracking your activities and seems to have a 
+[Toggl](http://www.toggl.com) offers a free account for tracking your activities and seems to have a 
 simple and clean interface. I still need to figure out exactly how to inject the
 tasks into each project/workspace in a way that makes toggl's stats and graphs
 interesting to the end user.
 
-If you're interested in trying out timetracker, then start by reading the README 
+If you're interested in trying out [timetracker](http://github.com/rlgomes/timetracker), then start by reading the README 
 at the base of the project and it will let you know how to install on linux 
 system. For those of you interested in using this on another OS please contact 
-me so we can work out how to acheive this.
+me so we can work out how to achieve this.
