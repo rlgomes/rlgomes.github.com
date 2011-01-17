@@ -1,3 +1,22 @@
+<<<<<<< HEAD
+---
+layout: index
+title: Rodney's Corner
+---
+
+<div id="posts">
+
+	<div class="subtitle">Recent Posts</div>
+	{% for post in site.posts limit:10 %}
+	<span>{{ post.date | date_to_long_string }} </span> &raquo; <a class="postlink" href="{{ post.url }}">{{ post.title }}</a></h2><br/>
+	{% endfor %}
+
+	<div class="subtitle">My Projects</div>
+    &raquo; <a href="http://github.com/rlgomes/dtf">DTF:</a> Distributed Testing Framework<br/>
+    &raquo; <a href="http://github.com/rlgomes/timetracker">timetracker:</a> a desktop time tracking utility<br/>
+    &raquo; <a href="http://github.com/rlgomes/pangu">pangu:</a> Data generation library<br/>
+</div>
+=======
 
 <!DOCTYPE html>
 <html>
@@ -10,3 +29,4 @@
         <b>More to come soon...</b>
     </body>
 </html>
+>>>>>>> 874ffa07870defed8fa6b32930bf51d11026ec86

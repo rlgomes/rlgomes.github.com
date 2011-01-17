@@ -1,0 +1,16 @@
+---
+layout: post
+title: My First Post
+published: true
+---
+
+
+Just got the blog up and running with Jekyll and thought I'd post a quick note
+to see how things look. This is nothing fancy and just makes tracking my time 
+and interest in projects very easy since adding a new post is creating a simple
+text file and checking it in. 
+
+Hopefully I will be able to write more on the things I'm currently working on 
+in terms of technology as well as some of my hobbies which include music and 
+piano playing. With time I'll make things look a little nicer but I really want
+something simple and easy on the eyes.

@@ -1,0 +1,72 @@
+
+#title {
+    padding: 25px 0px 0px 0px;	
+   
+    font-family: 'Rock Salt';  
+    font-size: larger;
+    font-weight: bold;
+}
+
+#contact { 
+    width: 20%;
+    padding: 0px 0px 25px 0px;
+
+    font-family: 'Ubuntu';  
+    font-size: small;
+}
+
+.post_title { 
+    padding: 25px 0px 10px 0px;	
+    
+    font-family: 'Ubuntu';  
+    font-size: large;
+    font-weight: bold;
+}
+
+.subtitle {
+    padding: 15px 0px 10px 0px;	
+    
+    font-family: 'Ubuntu';  
+    font-size: medium;
+    font-weight: bold;
+}
+
+#border {
+    width: 60%;
+    left: 20%;
+    height: 110%;
+    top: -10%;
+    z-index: -1;
+    position: absolute;
+    -moz-box-shadow: 0 0 10px 5px #cccccc;
+    -webkit-box-shadow: 0 0 10px 5px #cccccc;
+    box-shadow: 0 0 10px 5px #cccccc;	
+}
+
+#span {
+	color: gray;
+    font-family: 'Ubuntu';  
+}
+
+#body {
+    width: 45%;
+    text-align: left;
+    font-family: 'Ubuntu';  
+	margin: 15px 0;
+}
+
+#footer { 
+	width: 45%;
+    left: 27.5%;
+
+    font-size: small;
+    text-align: left;
+
+    font-family: 'Ubuntu';  
+	margin: 15px 0;
+	padding: 5px 5px 5px 5px;
+   
+    position:absolute;
+    bottom:0;
+    height:40px;   /* Height of the footer */
+}
