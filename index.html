@@ -7,7 +7,7 @@ title: Rodney's Corner
 
 	<div class="subtitle">Recent Posts</div>
 	{% for post in site.posts limit:10 %}
-	<span>{{ post.date | date_to_long_string }} </span> &raquo; <a class="postlink" href="{{ post.url }}">{{ post.title }}</a></h2><br/>
+	   <span>{{ post.date | date_to_long_string }} </span> &raquo; <a class="postlink" href="{{ post.url }}">{{ post.title }}</a></h2><br/>
 	{% endfor %}
 
 	<div class="subtitle">My Projects</div>

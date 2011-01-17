@@ -1,0 +1,29 @@
+---
+layout: post
+title: Introducing DTF
+published: true
+categories: [dtf, testing]
+---
+
+DTF is my testing framework that has been in development for 4+ years and has 
+survived my transition from Sun Microsystems to Yahoo. It was open sourced since
+May 2010. Now that I have my blog up and running I thought I'd make one of my 
+first posts be an introduction to DTF and what it can do. 
+
+To start DTF stands for Distributed Testing Framework and it is written in 100%
+Java so that it can be easily executed on any environment where Java is 
+supported. The tests in DTF are written in XML and unlike some of the XML 
+languages you've seen its sort of a mash-up of Ant + Jelly + Some additional 
+features you've never seen in XML. 
+
+The biggest advantage in DTF vs any other Java based distributed testing tool is
+that you can write a test that interacts with N different machines and the test
+explicitly describes all of the interactions of the components in your system 
+in one easy to read XML. Most other framework rely on multiple configuration 
+files and even different files to describe the behavior of each peace. Aside 
+from that there is also the feature to deploy your setup to your host machines 
+from a single machine using an XML format to describe your setup.
+
+With all of this the best thing to do is to start by reading the documentation 
+written for those interested in DTF and to start really digging in to what DTF 
+can do for you. DTF's documentation can be found here: {{ links.dtf.wiki }}
