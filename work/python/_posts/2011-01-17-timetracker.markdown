@@ -17,7 +17,7 @@ of using the hamster time tracking utility to moving to an the online toggl
 service which can handle the amount of data generated on a daily basis by my 
 usage patterns. The hamster applet wasn't designed to handle a few thousand
 task changes per day and was really having issues keeping up. I filed a bug 
-[here][https://bugs.launchpad.net/ubuntu/+source/hamster-applet/+bug/685001] in 
+[here](https://bugs.launchpad.net/ubuntu/+source/hamster-applet/+bug/685001) in 
 the hopes that gets fixed in the future. Meanwhile the default tracker is the 
 toggl tracker. 
 
