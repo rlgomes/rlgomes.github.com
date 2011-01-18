@@ -1,0 +1,49 @@
+---
+layout: post
+title: Continuous Integration Environment for DTF
+published: true
+categories: [dtf, testing, ci, ec2]
+---
+
+I've been working on building a CI environment for DTF for a while now and I'm 
+at the stage where the CI environment I put together work quite well for me. I 
+am using Amazon's EC2 to host my CI server which has a few simple scripts that
+when the EC2 instance is started will do the following:
+
+1. checkout my DTF source tree
+2. build DTF
+3. generate the DTF Documentation (JavaDoc documentation that generates documentation for all tags in DTF) to [here](http://rlgomes.github.com/dtf/)
+4. run the JUnit tests & DTF unit test suite and post the result to [here](http://rlgomes.github.com/dtf/results/html/)
+5. run the DTF performance verification tests and post the results to [here](https://github.com/rlgomes/dtf/wiki/Performance-test-results) 
+6. shutdown the EC2 instance
+   
+Takes about 20 minutes to run through everything and the instance itself stays 
+up and running for an additional 10 minutes (in case I need to ssh into the 
+instance for any maintenance). 
+
+There are quite a few tools/technologies that were used to achieve the above and 
+I'll now try to give a very simple explanation of each one used:
+
+* I choose to use Amazon's EC2 because it was really easy to get an instance up 
+and running on EC2 and my only issue was how do I get that instance to start 
+and stop on demand. After some investigation I wrote up a simple tool that would
+generate the HTTP POST/GET calls that I could use to start and stop my instances.
+This tool is available [here](https://github.com/rlgomes/ec2-tools) and can be 
+used by anyone else wanting to remotely administer their EC2 instances.
+
+* The result tracking of the JUnit tests and DTF's unit test suite are all done 
+by outputting results into a JUnit XML format and then using the JUnit report 
+task in Ant to generate the simple HTML reports.
+
+* The graphs generated from executing DTF's performance verification tests are 
+generated using [Google's Charting API](http://code.google.com/apis/chart/). 
+After poking around at the API for a while I basically made the DTF performance 
+tests record their performance results by appending to existing event files and 
+then outputting at the end of the PVT execution all of the performance results 
+gathered to a file that could be executed to download all of the chart PNG files 
+and then push those to github to be shown in a wiki page.
+
+There are still a few things that need some cleaning up in terms of polish and
+also I would like to include the DVT (Deployment Verification Tests) to this 
+automated testing but for now I am quite happy with how easily I can validate
+my changes to DTF do not break anything in an unpredictable manner.
