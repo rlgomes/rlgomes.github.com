@@ -10,8 +10,12 @@
     		<a href="/">Home</a>
     		<div class="post_title">{{ page.title }}</div>
     		<div id="post.body">{{ content }}</div>
-    	    <div>Related posts:</div>{% for post in site.related_posts limit:5 %}
-    	    <a href="{{ post.url }}">{{ post.title }}</a>{% endfor %}
+    	    <div>Related:</div>
+    	    <ul>
+	    	    {% for post in site.related_posts limit:5 %}
+	    	    <li><a href="{{ post.url }}">{{ post.title }}</a></li>
+	    	    {% endfor %}
+    	    </ul>
         </div>
         </center>
 	</body>
