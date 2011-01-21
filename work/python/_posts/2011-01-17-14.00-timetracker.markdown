@@ -21,7 +21,7 @@ task changes per day and was really having issues keeping up. I filed a bug
 the hopes that gets fixed in the future. Meanwhile the default tracker is the 
 toggl tracker. 
 
-[Toggl](http://www.toggl.com) offers a free account for tracking your activities and seems to have a 
+[toggl](http://www.toggl.com) offers a free account for tracking your activities and seems to have a 
 simple and clean interface. I still need to figure out exactly how to inject the
 tasks into each project/workspace in a way that makes toggl's stats and graphs
 interesting to the end user.

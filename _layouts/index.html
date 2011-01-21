@@ -2,27 +2,25 @@
 <html>
 	<head>
 	   <title>{{ page.title }}</title>
-	   <link rel="stylesheet" href="css/main.css" type="text/css">
+	   <link rel="stylesheet"
+	         href="css/main.css"
+	         type="text/css">
 	   <link href='http://fonts.googleapis.com/css?family=Ubuntu'
-	         rel='stylesheet' type='text/css'>
+	         rel='stylesheet'
+	         type='text/css'>
 	   <link href='http://fonts.googleapis.com/css?family=Rock+Salt'
-	         rel='stylesheet' type='text/css'>
+	         rel='stylesheet'
+	         type='text/css'>
     </head>
     <body>
-		<center>
-            <div id="title">{{ page.title }}</div>
-			<center>
-		        <div id="contact">rodneygomes <b>(AT)</b> gmail <b>(DOT)</b> com</div>
-			</center>
-			<center>
-	            <div id="body">{{ content }}</div>
-	        </center>
-			<center>
-				<div id="footer" class=".shadow">
-					<div style="text-align: right">Powered by <a href="http://jekyllrb.com/">Jekyll</a></div>
-					<div style="text-align: right">Last Updated: {{site.time}}</div>
-				</div>
-			</center>
-	   </center>
+        <center>
+	        <div id="title">{{ page.title }}</div>
+	        <div id="contact">rodneygomes <b>(AT)</b> gmail <b>(DOT)</b> com</div>
+	        <div id="body">{{ content }}</div>
+			<div id="footer" class=".shadow">
+				<div style="text-align: right">Powered by <a href="http://jekyllrb.com/">Jekyll</a></div>
+				<div style="text-align: right">Last Updated: {{site.time}}</div>
+			</div>
+		</center>
     </body>
 </html>
