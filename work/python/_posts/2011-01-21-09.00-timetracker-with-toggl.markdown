@@ -1,0 +1,21 @@
+---
+layout: post
+title: Timetracker with toggl support
+published: true
+categories: [tracking, python, monitor, toggl]
+---
+
+The timetracker tool is now using the online time tracking service toggl as 
+the default tracker and will automatically create new projects by the name of 
+the activity you've given your current task and file all of those tasks under
+the workspace timetracker. You can change the workspace name in your 
+configuration file.
+
+Once you've started tracking your tasks you'll be able to open up toggl and see 
+some pretty awesome pie charts of where you're spending your time. 
+
+<center><img src="/images/toggl_pie_chart.png"/></center>
+
+Of course it will be nicer to make more interesting charts/graphs once toggl
+matures a bit further but for now at least you can use timetracker to really 
+figure out where you spend most of your time when you're on your laptop.
