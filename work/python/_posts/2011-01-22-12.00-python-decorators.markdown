@@ -1,0 +1,158 @@
+---
+layout: post
+title: Python decorators
+published: true
+categories: [python, programming]
+---
+
+I recently discovered decorators in Python and have been pretty impressed with
+how they work. Basically it allows you to change the behavior of a function or 
+method without having to alter the code that represents that function. Instead
+with a decorator you basically label/annotate the method with a keyword that
+basically identifies which decorator to apply to this function. 
+
+Lets look at the simple example of you having creating a bunch of functions that
+do different tasks and then when you're running in DEBUG mode you'd like to be 
+able to get the amount of time spent on each of these calls. Lets first piece
+together a simple Python module with a few functions that do some simple tasks
+in it, for this example I've decided to create a simple logger module:
+
+{% highlight python %}
+def i(msg):
+    print("I: %s" % msg)
+
+def e(msg):
+    print("E: %s" % msg)
+
+def d(msg):
+    print("D: %s" % msg)
+
+def w(msg):
+    print("W: %s" % msg)
+{% endhighlight %}
+
+There are four simple methods that log info, error, debug and warning messages
+and now we can design our perf module that will be used to decorate these methods
+so we can do things such as counting the occurrences of method calls or even 
+just calculate the average time spent on these calls at runtime. Lets start by 
+putting together the decorator that can calculate how much time we spent on each
+individual call.
+
+So a decorator is nothing more than a function that accepts another function as
+an argument. The very basic decorator definition looks like so:
+
+{% highlight python %}
+import time
+
+def track(f):
+    def new_f(*args, **kwargs):
+        t = time.time()*1000
+        ret = f(*args, **kwargs)
+        dur = (time.time() * 1000) - t
+        name = f.__name__
+        print("%s executed in %dms" % (name, dur))
+        return ret
+    
+    return new_f
+{% endhighlight %}
+
+This is a decorator defined as a function you basically have to return a function
+as part of the contract of defining a decorator this way. In our case we create
+a simple function that wraps the existing one and return that. In this new function
+we're just making the same call as your code intended but measuring the time spent.
+The *args* are the arguments passed to the original function and the *kwargs* are 
+the keyword arguments passed to the original function.
+
+Now Lets put together a silly test that simply logs a bunch of lines with our 
+test logger. Here is this test:
+
+{% highlight python %}
+import logger
+
+logger.i("just a message")
+logger.e("oh crap!")
+logger.d("debug some stuff")
+logger.w("you should have a look a this")
+{% endhighlight %}
+
+We're ready to go back to the original module and add the @track decorator to 
+each of our calls. Our module will look like so:
+
+{% highlight python %}
+from perf import track 
+
+@track
+def i(msg):
+    print("I: %s" % msg)
+
+@track
+def e(msg):
+    print("E: %s" % msg)
+
+@track
+def d(msg):
+    print("D: %s" % msg)
+
+@track
+def w(msg):
+    print("W: %s" % msg)
+{% endhighlight %}
+ 
+When we execute our same test module we'll now see the following in the logs
+
+<pre>
+> python test.py
+I: just a message
+i executed in 0ms
+E: oh crap!
+e executed in 0ms
+D: debug some stuff
+d executed in 0ms
+W: you should have a look a this
+w executed in 0ms
+</pre>
+
+Of course the amount of time spent is less than 0ms and that's not a surprise
+but what you can see here is that we now have the ability to track the performance
+of these calls by simply marking them with the decorator keyword. 
+
+Lets take sometime to make that decorator extra smart and have it turned off/on
+based on a global DEBUG flag. The end result should look like so:
+
+{% highlight python %}
+import time
+
+global DEBUG
+DEBUG = False
+
+def track(f):
+    
+    global DEBUG
+    
+    if ( DEBUG ):
+        def new_f(*args, **kwargs):
+            t = time.time()*1000
+            ret = f(*args, **kwargs)
+            dur = (time.time() * 1000) - t
+            name = f.__name__
+            print("%s executed in %dms" % (name, dur))
+            return ret
+        
+        return new_f
+    else: 
+        return f
+{% endhighlight %}
+
+This actually shows that you can make a decorator that adds no overhead when it
+is turned off because it just returns the same function that was already in 
+place before the decorator had been used. Basically we can create a set of 
+performance measuring decorators that have a negligible impact on our code when 
+it running in production. 
+
+Of course there are more things that can be done with Python decorators but I 
+just wanted to write up the starting point for future reference and hopefully 
+inspire others to come up with some brilliant uses of Python decorators.
+
+I created a small Eclipse project while writing this entry and you can get it 
+from <a href="/images/decorators.tar.gz">here</a> if you'd like.
+
