@@ -1,0 +1,20 @@
+---
+layout: post
+title: Komodo Editor
+published: false
+categories: [ide, development, html, web, javascript, python]
+---
+
+Recently tried out the [Komodo Editor](http://www.activestate.com/komodo-edit)
+and have found its an excellent script language editor (Python, Ruby, Javascript)
+or HTML editor. The editor is free while the IDE is a paid product that is quite
+pricey but I'm certain that for serious commecial development it would have its
+purposes.
+
+Feels like its built on top of Mozilla technologies if you check out the add-ons
+and the general look and feel of certain elements. This is a bonus for me because
+it means 
+
+I've been using for an HTML5 class I was taking at work and have found it to
+work perfectly. Even the w
+ 

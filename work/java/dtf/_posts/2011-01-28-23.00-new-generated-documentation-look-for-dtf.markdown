@@ -1,0 +1,43 @@
+---
+layout: post
+title: New look and feel for the generated documentation of DTF
+published: true
+categories: [dtf, testing, css, html]
+---
+
+Spent sometime cleaning up the way I generate DTF documentation so that it
+outputs the HTML elements with the required class and id attributes. With this
+I am now able to correctly style the DTF generated documentation to make it a
+little easier on the eyes. As you can see from a few comparative screenshots
+below there are a few good improvements and I'll definitely be working on
+cleaning this up further but I'm pretty happy with the current results.
+
+<figure>
+    <img src="/images/2011/jan/old_dtf_index_doc.png"/>
+    <figcaption>old index page</figcaption>
+</figure>
+
+<figure>
+    <img src="/images/2011/jan/new_dtf_index_doc.png"/>
+    <figcaption>new index page</figcaption>
+</figure>
+
+<figure>
+    <img src="/images/2011/jan/old_dtf_tag_doc.png"/>
+    <figcaption>old tag documentation page</figcaption>
+</figure>
+
+<figure>
+    <img src="/images/2011/jan/new_dtf_tag_doc.png"/>
+    <figcaption>new tag documentation page</figcaption>
+</figure>
+
+<figure>
+    <img src="/images/2011/jan/old_dtf_feature_doc.png"/>
+    <figcaption>old feature documentation page</figcaption>
+</figure>
+
+<figure>
+    <img src="/images/2011/jan/new_dtf_feature_doc.png"/>
+    <figcaption>new feature documentation page</figcaption>
+</figure>
