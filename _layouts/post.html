@@ -1,25 +1,35 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
     <head>
+        <meta charset="UTF-8">
         <title>{{ page.title }}</title>
- 	    <link rel="stylesheet" href="/css/main.css" type="text/css">
+        <link rel="stylesheet" href="/css/main.css" >
+        <link href='http://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet'/>
+        <link href='http://fonts.googleapis.com/css?family=Rock+Salt' rel='stylesheet'/>
     </head>
-	<body>
-	    <center>
-        <div id="body">
+    <body>
+        <center>
+            <div id="body">
     		<a href="/">Home</a>
-    		<div class="post_title">{{ page.title }}</div>
-    		<div id="post.body">{{ content }}</div>
-    		
-    		{% if site.relate_posts.length != 0 %}
-	    	    <div>Related:</div>
-	    	    <ul>
-		    	    {% for post in site.related_posts limit:5 %}
-		    	    <li><a href="{{ post.url }}">{{ post.title }}</a></li>
-		    	    {% endfor %}
-	    	    </ul>
-    	    {% endif %}
-        </div>
+                <article>
+                    <h1>{{ page.title }}</h1>
+    
+                    <div id="post.body">{{ content }}</div>
+                    
+                    <footer>
+                        {% if site.relate_posts.length != 0 %}
+                        <div id='related_div'>
+                            <div id='related_label'>Related:</div>
+                            <ul>
+                                    {% for post in site.related_posts limit:5 %}
+                                    <li><a href="{{ post.url }}">{{ post.title }}</a></li>
+                                    {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </footer>
+                </article>
+            </div>
         </center>
-	</body>
+    </body>
 </html>

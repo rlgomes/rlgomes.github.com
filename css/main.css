@@ -15,15 +15,15 @@
     font-size: small;
 }
 
-.post_title { 
+h1 { 
     padding: 25px 0px 10px 0px;	
     
     font-family: 'Ubuntu';  
-    font-size: large;
+    font-size: larger;
     font-weight: bold;
 }
 
-.subtitle {
+h2 {
     padding: 15px 0px 10px 0px;	
     
     font-family: 'Ubuntu';  
@@ -31,30 +31,49 @@
     font-weight: bold;
 }
 
+figure {
+    display: block;
+    text-align: center;
+    margin-bottom: 25px;
+    border: 1px solid #dddddd;
+}
+
+figcaption {
+    display: block;
+    text-align: center;
+    font-weight: bold;
+}
+
+#related_div {
+    padding-top: 20px;    
+}
+
 #span {
-	color: gray;
+    color: gray;
     font-family: 'Ubuntu';  
+}
+
+img {
+    width: 100%;
 }
 
 #body {
     width: 45%;
     text-align: left;
     font-family: 'Ubuntu';  
-	margin: 15px 0;
+    margin: 15px 0;
 }
 
-#footer { 
-	width: 45%;
+footer { 
     left: 27.5%;
 
-    font-size: small;
+    font-size: medium;
     text-align: left;
 
     font-family: 'Ubuntu';  
-	margin: 15px 0;
-	padding: 5px 5px 5px 5px;
+    margin-bottom: 15px;
+    padding: 5px 5px 5px 5px;
    
-    position:absolute;
     bottom:0;
     height:40px;   /* Height of the footer */
 }
