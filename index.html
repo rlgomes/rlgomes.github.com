@@ -5,7 +5,7 @@ title: Rodney's Corner
 
 <div id="posts">
     <h2>Recent Posts</h2>
-    {% for post in site.posts limit:10 %}
+    {% for post in site.posts limit:7 %}
        <span>{{ post.date | date_to_long_string }} </span> &raquo; <a class="postlink" href="{{ post.url }}">{{ post.title }}</a></h2><br/>
     {% endfor %}
     

@@ -64,7 +64,8 @@ img {
     margin: 15px 0;
 }
 
-footer { 
+footer {
+    width: 45%;
     left: 27.5%;
 
     font-size: medium;
