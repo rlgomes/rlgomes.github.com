@@ -1,0 +1,24 @@
+---
+layout: post
+title: Fixing Eclipse Content Assist
+published: true
+categories: [dtf, testing]
+---
+
+If you use eclipse like I do for developing anything form Python scripts to
+Android projects you may have noticed that recently your content assist feature
+is either really slow or literally freezes up eclipse. Well you're in luck
+because the reason its most likely doing this is because of the ADT Plugin that
+you're using to do Android development.
+
+So it seems there are a few bugs open on the subject but put simply the content
+assist tries to look for the Android source code under each of the Android
+folders at *sdk_location/platforms/android-x* (where x is the android level).
+When the content assist can't find the *sources* folder then it just goes nuts
+and wastes alot of cpu cycles, the easy fix is to create a simple *sources*
+folder under each of those *android-x* folders and your content assist will be
+back to behaving as usual.
+
+The longer and less easy fix is to download the source for each of those builds
+and place it there, but I really don't think the majority of developers care for
+all of the source code.
