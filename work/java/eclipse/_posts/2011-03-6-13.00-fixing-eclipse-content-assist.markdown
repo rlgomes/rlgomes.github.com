@@ -2,7 +2,7 @@
 layout: post
 title: Fixing Eclipse Content Assist
 published: true
-categories: [dtf, testing]
+categories: [eclipse, freeze, content assist, testing]
 ---
 
 If you use eclipse like I do for developing anything form Python scripts to
