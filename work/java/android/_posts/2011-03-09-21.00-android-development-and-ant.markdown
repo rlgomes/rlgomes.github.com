@@ -1,0 +1,43 @@
+---
+layout: post
+title: Android Development and Ant
+published: true
+categories: [android, ant, development]
+---
+
+When thinking about automatiing the building/testing of an Android project I ran
+across the necessity to do so from the command line and not using Eclipse. After
+some searching I found that its quite easy to get this done with the tools that
+Android has already available which can generate a simple build.xml file to be
+use for building/installing/packaging an Android project.
+
+To build your Ant build file you can use simply the following from the root
+of your project:
+
+<pre>
+android update project -p .
+</pre>
+
+Now if you need to link additional Android projects to this one you can do so
+with the following command:
+
+<pre>
+android update project -p . -l path/to/other/android/project
+</pre>
+
+To see the available targets just issue the ususal: *ant -p* and you'll get all
+of the available targets:
+
+<pre>
+Main targets:
+
+ clean      Removes output files created by other targets.
+ compile    Compiles project's .java files into .class files
+ debug      Builds the application and signs it with a debug key.
+ install    Installs/reinstalls the debug package onto a running emulator or
+            device. If the application was previously installed, the signatures
+            must match.
+ release    Builds the application. The generated apk file must be signed before                             it is published.
+ uninstall  Uninstalls the application from a running emulator or device.
+Default target: help
+</pre>
