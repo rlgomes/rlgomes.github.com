@@ -1,0 +1,55 @@
+---
+layout: post
+title: Python performance module
+published: true
+categories: [python, programming, pyperf]
+---
+
+I just created a new Python performance module to easily give you performance
+information about important functions with in your existing Python code without 
+having to litter your code with test code and checks here and there. The new 
+library is called pyperf and it uses Python decorators to mark the methods you 
+want to track performance statistics on.
+
+I wrote this because I needed to do some performance measurement on another 
+project that I'm going to put on my github account that is an old school project
+on l-systems and generating/rendering those l-systems into nice 3D images that 
+look like organic objects (i.e. trees, bushes, shrubs in a game). I'll write up
+another post on that library a little later for now I wanted to release this
+module in case anyone else finds it useful and wants to help extend and make it
+useful for themselves and others.
+
+The pyperf library is very simple to use and you can start measuring the 
+performance of your critical methods quickly. The first thing to do is decorate
+the functions you want with the pyperf.measure decorator. By default the pyperf
+library is not enabled and to enable it you have two choices:
+
+   1. Set the pyperf.PYPERF to True and this will make it so that the pyperf 
+      library is monitoring the function that have been previously decorated.
+      
+   2. Sending the signal SIGUSR1 to the Python application you have decorated
+      with the pyperf.measure decorat will enable/disable the pyperf library 
+      which will print the current state to the logs so you know if its turned
+      on or off.
+
+The performance report will be printed at the end of your codes execution when 
+your Python application exits. If you'd like to get a report at runtime then 
+send the SIGUSR2 signal to the Python application and the pyperf library will 
+print the current report information.
+
+There are a few configuration options that you have that can be set by changing
+the global variables:
+
+   pyperf.PYPERF_TRACKARGUMENTS - when set to True the pyperf report will track
+                                  the function calls by the arguments to the 
+                                  same function and separating the results by 
+                                  the arguments.
+                                  
+   pyperf.PYPERF_TRACKCALLER - when set to True the pyperf report will track the
+                               function calls by the caller to the function you 
+                               decorated.
+
+There are still a few features I'd like to implement which I've added to the 
+github issues of this repository and I think that configuring the library could
+be done in a nicer way but for now this is a first good step in the direction of
+creating a nice and clean performance library for any Python code.
