@@ -1,6 +1,6 @@
 ---
 layout: post
-title: New look and feel for the generated documentation of DTF
+title: New look and feel for DTF documentation
 published: true
 categories: [dtf, testing, css, html]
 ---
