@@ -6,7 +6,7 @@ title: Rodney's Corner
 <div id="posts">
     <h2>Recent Posts</h2>
     <table>
-	   {% for post in site.posts limit:7 %}
+	   {% for post in site.posts limit:25 %}
 	   <tr>
 	       <td nowrap="nowrap"><span>{{ post.date | date_to_long_string }}</span></td>
 	       <td nowrap="nowrap"><b>&raquo;</b></td>
