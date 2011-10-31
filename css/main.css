@@ -45,7 +45,11 @@ figcaption {
 }
 
 #related_div {
-    padding-top: 20px;    
+    padding-top: 10px;    
+}
+
+#related_label {
+    padding: 0px;    
 }
 
 #span {
@@ -61,18 +65,11 @@ figcaption {
 }
 
 footer {
-    width: 45%;
-    left: 27.5%;
-
     font-size: medium;
     text-align: left;
 
     font-family: 'Ubuntu';  
     margin-bottom: 15px;
-    padding: 5px 5px 5px 5px;
-   
-    bottom:0;
-    height:40px;   /* Height of the footer */
 }
 
 /* below are all of the highlight css rules required for code highlighting */

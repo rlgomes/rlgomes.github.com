@@ -4,8 +4,7 @@ title: Archived Posts
 ---
 
 <div id="posts">
-
-	{% for post in site.posts %}
-	   <span>{{ post.date | date_to_long_string }} </span> &raquo; <a class="postlink" href="{{ post.url }}">{{ post.title }}</a></h2><br/>
-	{% endfor %}
+    {% for post in site.posts %}
+       <span>{{ post.date | date_to_long_string }} </span> &raquo; <a class="postlink" href="{{ post.url }}">{{ post.title }}</a></h2><br/>
+    {% endfor %}
 </div>

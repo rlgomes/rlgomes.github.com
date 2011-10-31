@@ -1,4 +1,10 @@
 
 img {
-	width: 100%;
+    width: 100%;
+}
+
+.highlight {
+    background-color: #BBBBBB;
+    padding: 5px;
+    border: 1px dotted black;
 }
