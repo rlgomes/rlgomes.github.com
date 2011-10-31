@@ -1,0 +1,26 @@
+---
+layout: post
+title: Back to Haskell
+published: true
+categories: [haskell, functional programming]
+---
+
+So I recently decided to get back on the functional programming band wagon and
+get re-acquainted with haskell. Haskell is one of very few purely functional
+languages that really expresses programming in a very beautiful mathematical 
+manner. I learnt Haskell early in university and was always fascinated by how 
+simple and yet powerful the language was. 
+
+Of course, shortly after leaving school I found that functional programming 
+languages were in no way mainstream or being used by software companies at large.
+This was of course in 2003 when I finished my masters and things have changed
+quite a bit in the past 8 years. In today's programming scene there are a few 
+functional programming languages that are being used quite extensively. Erlang
+and Scala seem to have found mainstream adoption in a few places and even my 
+beloved Haskell has some usage behind the curtains at Facebook and Google.
+
+Now I haven't touched Haskell in ages but I thought I'd try and relearn Haskell
+and be able to write a few simple tools in Haskell. I will be documenting my 
+progress in the form of a few blog posts and I hope to spike the interest of 
+others in the language or at least make it easier for myself in the future when 
+I want to review the language quickly.
