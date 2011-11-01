@@ -12,7 +12,8 @@ start with writing a simple "Hello World" application in Haskell:
 {% highlight hs %}
 #! /usr/bin/env runhaskell
 module Main(main) where
-main = putStrLn "Hello, World!" {% endhighlight %}
+main = putStrLn "Hello, World!"
+{% endhighlight %}
 
 That is a pretty small program even when you compare to writing hello world in
 an imperative language such as C. I added the shebang to make sure you'd be 
@@ -58,7 +59,7 @@ you were writing mathematical expressions in school. Of couse now that we have
 this function lets load it into the ghci shell and try to apply it to a few 
 different values:
 
-<pre>
+<console>
 > ghci 
 GHCi, version 7.0.3: http://www.haskell.org/ghc/  :? for help
 Loading package ghc-prim ... linking ... done.
@@ -74,7 +75,7 @@ Ok, modules loaded: Main.
 *Main> plus1 (plus1 2)
 4
 *Main> 
-</pre>
+</console>
 
 Lets jump into deal with lists of data and how to write a few useful functions
 to deal with lists. The first thing to realize is that a list in Haskell is 
@@ -133,7 +134,7 @@ against various datatypes that share a common structure. The len function shown
 can be used against a list of integers as well as a string which is a list 
 of Chars. Here's an example:
 
-<pre>
+<console>
 ...
 Prelude> :l test.hs
 [1 of 1] Compiling Main             ( test.hs, interpreted )
@@ -142,7 +143,7 @@ Ok, modules loaded: Main.
 7
 *Main> len "Hello, World!"
 13
-</pre>
+</console>
 
 Polymorphism is one of the other things I find that Haskell does really well 
 when compared to other languages. All other languages refer to polymorphism as

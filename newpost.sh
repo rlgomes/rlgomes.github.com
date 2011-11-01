@@ -15,18 +15,13 @@ then
     PLACE=$NEWPLACE
 fi
 
-HEADER="---
-layout: post
-title: $TITLE
-published: true
-categories: [$KEYWORDS]
----"
+HEADER="---\nlayout: post\ntitle: $TITLE\npublished: true\ncategories: [$KEYWORDS]\n---\n"
 
 mkdir -p "work/$PLACE/_posts"
 
 DATE=`date +"%Y-%m-%d-%H.%M"`
 # 2011-10-30-13.00-the-title-of-the-post.markdown
 TITLE=`echo $TITLE | sed 's/ /-/g'`
-echo $HEADER > "work/$PLACE/_posts/${DATE}-$TITLE.markdown"
+echo -e $HEADER > "work/$PLACE/_posts/${DATE}-$TITLE.markdown"
 
 

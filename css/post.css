@@ -5,6 +5,19 @@ img {
 
 .highlight {
     background-color: #BBBBBB;
-    padding: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
     border: 1px dotted black;
+}
+
+console {
+    background-color: #000000;
+    color: #FFFFFF;
+    padding-bottom: 15px;
+    padding-left: 15px;
+    padding-right: 15px;
+    border: 1px dotted black;
+    white-space: pre;
+    font-family: monospace;
+    display: block;
 }
