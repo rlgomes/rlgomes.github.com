@@ -1,0 +1,79 @@
+---
+layout: post
+title: Higher order functions in Haskell
+published: true
+categories: [haskell,function programming]
+---
+
+From Haskell's documentation: "A higher-order function is a function that takes 
+other functions as arguments or returns a function as result.". With this in 
+mind lets start by writing a few functions over lists:
+
+{% highlight hs %}
+addone :: [a] -> [a]
+addone [] = []
+addone (x:xs) = (x+1) : addone(xs)
+
+divlist :: (Fractional a) => [a] -> a -> [a]
+divlist [] _ = []
+divlist (x:xs) n = (x / n) : divlist xs n
+{% endhighlight %}
+
+We could add a few others but the idea here is that we have to write a new 
+function everytime we want to traverse a list of elements and apply a function
+to these elements while recreating the list in the same order. What we realy 
+need is a function with the following signature:
+
+{% highlight hs %}
+applyf :: (a -> b) -> [a] -> [b]
+{% endhighlight %}
+
+You can see that the function takes a function that transforms **a to b**'s and
+a list of **a**'s to create a list of **b**'s. We can even define the applyf
+function quite easily as:
+
+{% highlight hs %}
+applyf :: (a -> b) -> [a] -> [b]
+applyf f [] = []
+applyf f (x:xs) = (f x) : applyf f xs
+{% endhighlight %}
+
+There actually already exists an **applyf** function called **map** in the 
+Haskell Prelude library. Lets show how to quickly redefine the **addone** and
+**divlist** function using the **map** function:
+
+{% highlight hs %}
+addone = map (+1)
+divlist n = map (/n) 
+{% endhighlight %}
+
+You can quickly see how to use **map** to basically apply any function to a 
+list of items and get back the list of the results. We can now start to 
+introduce a few other high order functions that are in the Prelude library:
+
+* **filter** - the filter function takes a boolean function as an argument
+and removes allelements from the input list that do not satisfy the boolean 
+function. This is very useful when you want to quickly filter out elements 
+based on a simple boolean function such as filtering a list of tuples in which
+the second element is the age and we the list to contain only the teenagers: {% highlight hs %}
+filterTeens = filter (\x -> snd(x) > 12 && snd(x) < 20) 
+{% endhighlight %} 
+
+* **foldl** - reduces a list of elements down to a simple object by applying a
+function you supplied and a starting value. You can use this to quickly sum up
+a list of values or even concatenate a list of strings, here are a few 
+examples: {% highlight hs %}
+sumlist = foldl (+) 0
+concatlist = foldl (++) ""
+{% endhighlight %}
+
+* **foldr** - same as foldl but starts the "folding" from the end of the list
+which can have a completely different meaning depending on the folding operation
+being used.
+
+There are many other higher order functions that are extremely useful when 
+wanting to apply transformations to lists. These functions can also be 
+generalized to other structures such as the **Tree** data that we introduced in 
+the previous post. We'll leave the creation of a map, filter for **Tree** as 
+an exercise for those who are interested in testing out their skills.
+
