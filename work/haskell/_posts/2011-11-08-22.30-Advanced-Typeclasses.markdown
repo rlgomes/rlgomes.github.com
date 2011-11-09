@@ -1,0 +1,196 @@
+---
+layout: post
+title: Advanced Typeclasses
+published: true
+categories: [haskell,functional programming]
+---
+
+Lets go back a bit to the typeclass topic and analye and understand well a few
+important typeclasses that allow you to do a few intesting things. We'll start 
+with the **Functor** typeclass, which has the following definition:
+
+{% highlight hs %}
+class Functor f where  
+    fmap :: (a -> b) -> f a -> f b  
+{% endhighlight %}
+
+We've introduced a new notation in our signature with the **f a**, in this
+simple signature we're using the a generic type constructor reference instead
+of a concrete constructor such as **Maybe** or from our previous post **Tree**.
+So when we create an instance of a **Functor f** we basically letting any function
+that wants to use the **Functor** how to apply and reconstruct our type. We can
+see how to easily implement a **Functor** instance for lists, like so:
+
+{% highlight hs %}
+instance Functor [] where
+    fmap = map
+{% endhighlight %}
+
+Lets define the instance of **Functor** for the **Tree** data type we defined
+in the previous post:
+
+{% highlight hs %}
+instance Functor Tree a where
+    fmap _ Leaf = Leaf
+    fmap f (Node a l r) = Node (f a) (fmap f l) (fmap f r)
+{% endhighlight %}
+
+With the above we can now easily apply higher order functions to our **Tree**
+instances like so:
+
+<console>
+Main> fmap (+2) sampleTree
+3
+    4
+        .
+        .
+    5
+        6
+            .
+            .
+        .
+</console>
+
+This is where I believe you should really start to see the beauty in the way 
+that Haskell works with your data types and being able to easily modify, 
+transform your types. There are a few other classtypes to look at which include
+**Foldable**, **Traversable**, etc.
+
+We're now going to have a look at the **Show** and **Read** classtypes. We've
+already seen the **Show** classtype but we want to show the complete function 
+here and understand a bit better how this works with the **Read** classtype.
+So here's the full definition of the Show classtype: 
+
+{% highlight hs %}
+class  Show a  where
+    showsPrec        :: Int -> a -> ShowS
+    show       :: a -> String 
+    showList         :: [a] -> ShowS
+
+-- Mimimal complete definition:
+-- show or showsPrec
+    showsPrec _ x s   = show x ++ s
+
+    show x        = showsPrec 0 x ""
+
+    showList []       = showString "[]"
+    showList (x:xs)   = showChar '[' . shows x . showl xs
+                        where showl []     = showChar ']'
+                              showl (x:xs) = showChar ',' . shows x .
+                                             showl xs
+{% endhighlight %}
+
+As we did before we only have to implement the **show** function (don't want to
+get into the **showsPrec** function at this stage). We'll create a new binary
+tree data type and define a very simple **Show** instance for this, here's 
+what we're looking at:
+
+{% highlight hs %}
+data BTree a = Leaf a | Branch (BTree a) (BTree a)
+
+showBTree :: (Show a) => BTree a -> String
+showBTree (Leaf a) = show a
+showBTree (Branch l r) = "(" ++ showBTree l ++ "|" ++ showBTree r ++ ")"
+
+instance Show a => Show (BTree a) where
+    show a = showBTree a
+
+sampleTree = Branch (Branch (Leaf 3) (Leaf 2)) (Leaf 1)
+{% endhighlight %}
+
+So when we do a show of the sampleTree we get the following output:
+
+<console>
+((3|2)|1)
+</console>
+
+Now we have to read the **Read** instance so that we can easily parse the 
+expressions of a **BTree** back into a **BTree** type that we can then process 
+with the various functions that'll we'll eventually write. The **Read** class 
+iself has the following definition:
+
+{% highlight hs %}
+class  Read a  where
+    readsPrec        :: Int -> ReadS a
+    readList         :: ReadS [a]
+
+-- Minimal complete definition:
+-- readsPrec
+    readList         = readParen False (\r -> [pr | ("[",s)  <- lex r,
+                                                    pr       <- readl s])
+                       where readl  s = [([],t)   | ("]",t)  <- lex s] ++
+                                        [(x:xs,u) | (x,t)    <- reads s,
+                                                    (xs,u)   <- readl' t]
+                             readl' s = [([],t)   | ("]",t)  <- lex s] ++
+                                        [(x:xs,v) | (",",t)  <- lex s,
+                                                    (x,u)    <- reads t,
+                                                    (xs,v)   <- readl' u]
+{% endhighlight %}
+
+As before we only need to implement the readsPrec function to have a working
+**Read** implementation. So lets also have a look at the **ReadS** type:
+
+{% highlight hs %}
+type ReadS a = String -> [(a, String)]
+{% endhighlight %}
+
+This type defines what a parse does which is to return for parts of the original
+string with the accompanying converted type. It also allows you to parse whatever
+is part of your **Read** implementation and return the rest of the string that 
+wasn't parsed.  
+
+Before we implement the **Read** instance for **BTree**s lets talk about 
+list comprehension and how to use it. List comprenhension is another feature in 
+Haskell that is implemented quite elegantly. List comprenhension has the 
+following syntax: 
+
+<console>
+[ expr | qualifier0 , ... , qualifierN ] 
+</console>
+
+In which the expr defines the way the elements are composed within the list 
+being generated and the qualifiers identify which elements are to be in the 
+resulting list. So lets for example construct a list of all of the odd numbers 
+from 1 to 100:
+
+{% highlight hs %}
+odd100 = [ i | i <- [1..100], odd(i) ]
+{% endhighlight %}
+
+Now here's how we could start putting together out **readTree** function:
+
+{% highlight hs %}
+readsTree :: (Read a) => ReadS (BTree a)
+readsTree ('(':s) = [ (Branch l r, u) | (l, '|':t) <- readsTree s,
+                                        (r, ')':u) <- readsTree t ]
+readsTree s = [(Leaf x, t)  | (x,t) <- reads s]
+
+instance Read a => Read (BTree a) where
+    readsPrec _ s = readsBTree s
+{% endhighlight %}
+
+Now the above function can be a bit to take in all at once but if you have a 
+closer look its really not doing much more than stating that if a string starts
+with the **'('** symbol then a **Branch l r** can be parsed from this string in 
+which the **l** comes from **readSTree s** and the returned string must start 
+with the **'|'** and then continues with **t** which would be parsed to return the **r**
+side of the **Branch** and would leave you with at least the **')'** symbol 
+followed by the rest of the string (which may be empty). The last pattern 
+of the function assumes everything else would be a **Leaf x** where is comes 
+from **reads** of **s**.
+
+This can now be easily be used to parse string back into the **BTree** type,
+like so:
+
+<console>
+Main> (reads "(1|(2|3))blah")::[(BTree Int,String)]
+[((1|(2|3)),"blah")]
+</console>
+
+We do have to tell **Haskell** what the type of the return is because otherwise
+Haskell can't deduce if its a binary tree of integers or a binary tree of 
+strings.
+
+By now I would hope you'd be able to write **Read** and **Show** instances for
+any of your own new datatypes and be able to have Haskell really work for you.
+
