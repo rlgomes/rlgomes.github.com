@@ -6,7 +6,7 @@ title: Rodney's Corner
 <div id="posts">
     <h2>Recent Posts</h2>
     <table>
-       {% for post in site.posts limit:25 %}
+       {% for post in site.posts limit:5 %}
        <tr>
            <td nowrap="nowrap"><span>{{ post.date | date_to_string }}</span></td>
            <td nowrap="nowrap"><b>&raquo;</b></td>
@@ -14,6 +14,8 @@ title: Rodney's Corner
        </tr>
        {% endfor %}
     </table>
+    <br/>
+    <a href="archive.html">Older posts...</a>
     
     <div id="github-badge"></div>
     <script type="text/javascript" charset="utf-8">
