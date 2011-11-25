@@ -1,31 +1,32 @@
 
 #title {
-    padding: 25px 0px 0px 0px;	
-   
-    font-family: 'Rock Salt';  
-    font-size: larger;
+    font-family: 'Rock Salt';  font-size: larger;
     font-weight: bold;
 }
 
 #contact { 
     width: 20%;
-    padding: 0px 0px 25px 0px;
-
     font-family: 'Ubuntu';  
     font-size: small;
 }
 
+#header {
+    width: 45%;
+    text-align: center;
+    border: 1px solid black;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-bottom: 15px;
+    border-radius: 5px;
+}
+
 h1 { 
-    padding: 25px 0px 10px 0px;	
-    
     font-family: 'Ubuntu';  
     font-size: larger;
     font-weight: bold;
 }
 
 h2 {
-    padding: 15px 0px 10px 0px;	
-    
     font-family: 'Ubuntu';  
     font-size: medium;
     font-weight: bold;
@@ -58,10 +59,15 @@ figcaption {
 }
 
 #body {
-    width: 55%;
+    width: 45%;
     text-align: left;
     font-family: 'Ubuntu';  
-    margin: 15px 0;
+    border: 1px solid black;
+    margin-top: 5px;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-bottom: 15px;
+    border-radius: 5px;
 }
 
 footer {
@@ -70,6 +76,29 @@ footer {
 
     font-family: 'Ubuntu';  
     margin-bottom: 15px;
+}
+
+#bottom-half {
+    width: 100%;
+}
+
+#bottom-half ul {
+    list-style: none;
+}
+
+.pl-link-img {
+    width: 16px;
+    height: 16px;
+}
+
+.pl-link-text {
+    margin-left: 10px;
+}
+
+#personal-life {
+}
+
+#github-badge {
 }
 
 /* Browser specific (not valid) styles to make preformatted text wrap */                

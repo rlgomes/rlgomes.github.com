@@ -8,15 +8,17 @@
     </head>
     <body>
         <center>
-            <h1>{{ page.title }}</h1>
-            <div id="contact">rodneygomes <b>(AT)</b> gmail <b>(DOT)</b> com</div>
-            
+            <div id="header">
+                <h1>{{ page.title }}</h1>
+                <span id="contact">rodneygomes <b>(AT)</b> gmail <b>(DOT)</b> com</span>
+            </div>
+
             <div id="body">{{ content }}</div>
-            
+
             <footer>
                 <div style="text-align: right">Powered by <a href="http://jekyllrb.com/">Jekyll</a></div>
                 <div style="text-align: right">Last Updated: {{site.time}}</div>
             </footer>
-	</center>
+        </center>
     </body>
 </html>
