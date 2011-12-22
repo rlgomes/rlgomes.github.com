@@ -1,6 +1,6 @@
 ---
 layout: post
-title: memoize decorator for python
+title: Memoize decorator for python
 published: true
 categories: [python,memoize,decorator]
 ---
