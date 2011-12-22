@@ -1,0 +1,31 @@
+---
+layout: post
+title: memoize decorator for python
+published: true
+categories: [python,memoize,decorator]
+---
+
+I ran into a situation when writing some code recently where I had to add 
+caching to an existing function in order to speed up the execution of my 
+function when it was called multiple times with the same arguments. I know 
+from experience that this involves a technique called memoization in which you 
+basically cache the previous result and when the same arguments are passed to 
+your function you pull from the cache instead of re-executed the same code
+that takes a while and would render the exact same result.
+
+Adding the memoization/caching feature to your function isn't hard but 
+immediately I found it made the whole function look ugly and cluttered, and I 
+was not satsified with that. Luckily I was using python which has a feature 
+called decorators which allow you to easily add more "functionality" to an 
+existing function without cluttering its "code space". 
+
+As any good engineer the first thing to do was to look around and see if someone
+had already created a memoize decorator for python and I quickly found there 
+was a decent example in the python documentation but it lacked quite a few 
+features including the ability to handle functions with lists or other objects
+as arguments. So I set out to create my own memoize module that could be easily
+used in other projects without having to clutter my code with "memoization" code.
+
+I built the memoize module that is now availabe [here](https://github.com/rlgomes/memoize)
+and the README included has enough information on how to use this in your own 
+project.
