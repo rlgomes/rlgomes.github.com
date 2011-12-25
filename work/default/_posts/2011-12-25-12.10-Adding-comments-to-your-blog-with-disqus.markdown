@@ -37,5 +37,7 @@ In my case all I had to add was:
 </console>
 
 Once I replaced the 'example' disqus shortname with the shortname of my site 
-everything worked perfectly.
+everything worked perfectly. The only thing you'll find is that if you have
+a static blog with jekyll as I do you won't be able to see the comments on the
+static site when you startup jekyll locally with the "jekyll --server" command.
 
