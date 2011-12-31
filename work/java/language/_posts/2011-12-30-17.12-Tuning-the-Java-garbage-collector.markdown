@@ -1,0 +1,153 @@
+---
+layout: post
+title: Tuning the Java Garbage Collector
+published: true
+categories: [java,gc,tuning]
+---
+
+Recently, I've found a few situations where when writing a prototype for 
+multi-node storage software that I want to be able to gaurantee the stability 
+of my performance numbers as the number of concurent requests grows and the JVM
+is under high stress where the GC kicks in more often and has the unfortunate
+effect of adding higher latency to your requests.
+
+Recently, I wanted to learn a bit more about the Java GC and how an applications
+performance can be "fixed" by tweaking the garbage collector being used. We'll 
+start by creating an application that will force the JVM to garbage collect more 
+often: Call a function in a loop and this function will create a large object 
+and calculate something complex (log(n)) and then throw away the object.
+
+We will always run the application with the JVM option: **"-Xmx64M"** which 
+basically means we can't use more than 64MB during our test runs and this 
+allows us to force the GC to kick-in more oftenly. Our slow/bad application 
+can be as simple as:
+
+{% highlight java %}
+/**
+ * Call a function in a loop and this function will create a large object 
+ * and calculate something complex (log(n)) and then throw away the object.
+ */
+public class BadApplication1 {
+
+    /**
+     * Generate a large array of integers and then calculate which is the 
+     * maximum value and returns that releasing the large object previously 
+     * created.
+     */
+    public static int maximum_random() { 
+        int[] random_integers = new int[10*1024*1024];
+        int maximum = random_integers[0];
+        
+        for (int value : random_integers) { 
+            if ( maximum < value ) maximum = value;
+        }
+        
+        return maximum;
+    }
+    
+    public static void main(String[] args) {
+
+        long durations = 0;
+        long duration = 0;
+        long start, stop;
+        for(int i = 0; i < 100; i++) {
+            start = System.currentTimeMillis();
+            maximum_random();
+            stop = System.currentTimeMillis();
+            duration = (stop-start);
+            durations += duration;
+            System.out.println("calculation took " + duration + "ms");
+        }
+        
+        System.out.println("average duration was " + durations/100 + "ms");
+    }
+}
+{% endhighlight %}
+
+When we start analyzing how much time it takes to run that program and in each 
+iteration print out how long we spent calculating the maximum value along with 
+running with the following options:
+
+java -Xmx64M -XX:+PrintGCApplicationStoppedTime BadApplication1
+
+The **-XX:+PrintGCAppliactionStoppedTime** tells the JVM to print out exactly 
+how much time is the GC taking and not allowing the application to do its work.
+Here is a quick output of what I'm currently getting on my system:
+
+<console>
+>java -Xmx64M -XX:+PrintGCApplicationStoppedTime BadApplication1
+...
+Total time for which application threads were stopped: 0.0117340 seconds
+calculation took 68ms
+Total time for which application threads were stopped: 0.0116940 seconds
+calculation took 69ms
+average duration was 69ms
+</console>
+
+Now we can see that we're spending a good 0.012s in garbage collection code on 
+every single iteration, which is basically 12ms of time in each of those 69ms
+of average time spent calling that "bad" function.
+
+Before we start trying out different garbage collectors and tweaking their 
+settings you should read some of the following links first:
+
+* http://www.oracle.com/technetwork/systems/index-156457.html
+* http://www.petefreitag.com/articles/gctuning/
+
+if you want a better explanation of how the various garbage collectors work. 
+
+So getting back to our situation we're suffering a 12ms overhead from the GC in
+every execution of ours and would like to reduce that by tuning the GC. The first
+idea might be to try and use the **Parallel Copy Collector** and see if this
+reduces the over head slightly:
+
+<console>
+> java -Xmx64M -XX:+UseParNewGC -XX:+PrintGCApplicationStoppedTime BadApplication1
+...
+Total time for which application threads were stopped: 0.0110810 seconds
+calculation took 64ms
+Total time for which application threads were stopped: 0.0075140 seconds
+calculation took 62ms
+average duration was 65ms
+</console>
+
+A very minimal improvement which isn't totally new since the only thing being
+done by this garbage collector is to have a thread per core when collecting the
+young generation garbage. Since my machine is a dual core machine and there 
+really is only 1 object to garbage collect in my code then I don't expect almost
+any improvement. 
+
+For the particular application that we wrote could benefit from a garbage 
+collector that has to deal with a large young generation and as the documentation
+states: 
+
+"Use the throughput collector when you want to improve the performance of your 
+application with larger numbers of processors. In the default collector garbage 
+collection is done by one thread, and therefore garbage collection adds to the 
+serial execution time of the application. The throughput collector uses 
+multiple threads to execute a minor collection and so reduces the serial 
+execution time of the application."
+
+So lets see what the benefit is like:
+
+<console>
+>java -Xmx64M -XX:+UseParallelGC -XX:+PrintGCApplicationStoppedTime BadApplication1
+...
+Total time for which application threads were stopped: 0.0042150 seconds
+calculation took 46ms
+Total time for which application threads were stopped: 0.0053080 seconds
+calculation took 45ms
+average duration was 48ms
+</console>
+
+Now we're 30% faster just by making a better choice in the GC being used. We've 
+gotten this "additional boost in performance" by now spending just 4ms per GC.
+
+In general you don't go about fiddling with the garbage collector unless you've
+noticed your application isn't behaving as you would expect it to and that 
+you're unable to gaurantee stable performance behavior and after some 
+investigation have found that the GC is in fact to be "blamed". There are 
+plenty of other situations in which tuning the GC can lead to a better 
+performing Java application but I just wanted to show that even a badly written 
+application can be "fixed" by a small change to the GC that is being used. 
+
