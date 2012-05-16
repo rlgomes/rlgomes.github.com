@@ -12,6 +12,10 @@ console {
     display: block;
 }
 
+p {
+	text-align: justify;
+}
+
 /* below are all of the highlight css rules required for code highlighting */
 .highlight  { background: #ffffff; }
 .highlight .c { color: #999988; font-style: italic } /* Comment */
