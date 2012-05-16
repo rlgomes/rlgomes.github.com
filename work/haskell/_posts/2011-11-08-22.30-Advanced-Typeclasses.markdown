@@ -6,20 +6,21 @@ categories: [haskell,functional programming]
 ---
 
 Lets go back a bit to the typeclass topic and analye and understand well a few
-important typeclasses that allow you to do a few intesting things. We'll start 
+important typeclasses that allow you to do a few intesting things. We'll start
 with the **Functor** typeclass, which has the following definition:
 
 {% highlight hs %}
-class Functor f where  
-    fmap :: (a -> b) -> f a -> f b  
+class Functor f where
+    fmap :: (a -> b) -> f a -> f b
 {% endhighlight %}
 
 We've introduced a new notation in our signature with the **f a**, in this
 simple signature we're using the a generic type constructor reference instead
 of a concrete constructor such as **Maybe** or from our previous post **Tree**.
-So when we create an instance of a **Functor f** we basically letting any function
-that wants to use the **Functor** how to apply and reconstruct our type. We can
-see how to easily implement a **Functor** instance for lists, like so:
+So when we create an instance of a **Functor f** we basically letting any
+function that wants to use the **Functor** how to apply and reconstruct our
+type. We can see how to easily implement a **Functor** instance for lists,
+like so:
 
 {% highlight hs %}
 instance Functor [] where
@@ -51,20 +52,20 @@ Main> fmap (+2) sampleTree
         .
 </console>
 
-This is where I believe you should really start to see the beauty in the way 
-that Haskell works with your data types and being able to easily modify, 
+This is where I believe you should really start to see the beauty in the way
+that Haskell works with your data types and being able to easily modify,
 transform your types. There are a few other classtypes to look at which include
 **Foldable**, **Traversable**, etc.
 
 We're now going to have a look at the **Show** and **Read** classtypes. We've
-already seen the **Show** classtype but we want to show the complete function 
+already seen the **Show** classtype but we want to show the complete function
 here and understand a bit better how this works with the **Read** classtype.
-So here's the full definition of the Show classtype: 
+So here's the full definition of the Show classtype:
 
 {% highlight hs %}
 class  Show a  where
     showsPrec        :: Int -> a -> ShowS
-    show       :: a -> String 
+    show       :: a -> String
     showList         :: [a] -> ShowS
 
 -- Mimimal complete definition:
@@ -82,7 +83,7 @@ class  Show a  where
 
 As we did before we only have to implement the **show** function (don't want to
 get into the **showsPrec** function at this stage). We'll create a new binary
-tree data type and define a very simple **Show** instance for this, here's 
+tree data type and define a very simple **Show** instance for this, here's
 what we're looking at:
 
 {% highlight hs %}
@@ -104,9 +105,9 @@ So when we do a show of the sampleTree we get the following output:
 ((3|2)|1)
 </console>
 
-Now we have to read the **Read** instance so that we can easily parse the 
-expressions of a **BTree** back into a **BTree** type that we can then process 
-with the various functions that'll we'll eventually write. The **Read** class 
+Now we have to read the **Read** instance so that we can easily parse the
+expressions of a **BTree** back into a **BTree** type that we can then process
+with the various functions that'll we'll eventually write. The **Read** class
 iself has the following definition:
 
 {% highlight hs %}
@@ -136,21 +137,21 @@ type ReadS a = String -> [(a, String)]
 
 This type defines what a parse does which is to return for parts of the original
 string with the accompanying converted type. It also allows you to parse whatever
-is part of your **Read** implementation and return the rest of the string that 
-wasn't parsed.  
+is part of your **Read** implementation and return the rest of the string that
+wasn't parsed.
 
-Before we implement the **Read** instance for **BTree**s lets talk about 
-list comprehension and how to use it. List comprenhension is another feature in 
-Haskell that is implemented quite elegantly. List comprenhension has the 
-following syntax: 
+Before we implement the **Read** instance for **BTree**s lets talk about
+list comprehension and how to use it. List comprenhension is another feature in
+Haskell that is implemented quite elegantly. List comprenhension has the
+following syntax:
 
 <console>
-[ expr | qualifier0 , ... , qualifierN ] 
+[ expr | qualifier0 , ... , qualifierN ]
 </console>
 
-In which the expr defines the way the elements are composed within the list 
-being generated and the qualifiers identify which elements are to be in the 
-resulting list. So lets for example construct a list of all of the odd numbers 
+In which the expr defines the way the elements are composed within the list
+being generated and the qualifiers identify which elements are to be in the
+resulting list. So lets for example construct a list of all of the odd numbers
 from 1 to 100:
 
 {% highlight hs %}
@@ -169,14 +170,14 @@ instance Read a => Read (BTree a) where
     readsPrec _ s = readsBTree s
 {% endhighlight %}
 
-Now the above function can be a bit to take in all at once but if you have a 
+Now the above function can be a bit to take in all at once but if you have a
 closer look its really not doing much more than stating that if a string starts
-with the **'('** symbol then a **Branch l r** can be parsed from this string in 
-which the **l** comes from **readSTree s** and the returned string must start 
-with the **'|'** and then continues with **t** which would be parsed to return the **r**
-side of the **Branch** and would leave you with at least the **')'** symbol 
-followed by the rest of the string (which may be empty). The last pattern 
-of the function assumes everything else would be a **Leaf x** where is comes 
+with the **'('** symbol then a **Branch l r** can be parsed from this string in
+which the **l** comes from **readSTree s** and the returned string must start
+with the **'|'** and then continues with **t** which would be parsed to return
+the **r** side of the **Branch** and would leave you with at least the **')'**
+symbol followed by the rest of the string (which may be empty). The last pattern
+of the function assumes everything else would be a **Leaf x** where is comes
 from **reads** of **s**.
 
 This can now be easily be used to parse string back into the **BTree** type,
@@ -188,7 +189,7 @@ Main> (reads "(1|(2|3))blah")::[(BTree Int,String)]
 </console>
 
 We do have to tell **Haskell** what the type of the return is because otherwise
-Haskell can't deduce if its a binary tree of integers or a binary tree of 
+Haskell can't deduce if its a binary tree of integers or a binary tree of
 strings.
 
 By now I would hope you'd be able to write **Read** and **Show** instances for

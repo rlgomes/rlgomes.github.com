@@ -1,29 +1,77 @@
 <!DOCTYPE html>
 <html>
     <head>
+	    <meta charset="utf-8">
         <title>{{ page.title }}</title>
-        <link rel="stylesheet" href="/css/main.css" >
-        <link href='http://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet'/>
-        <link href='http://fonts.googleapis.com/css?family=Rock+Salt' rel='stylesheet'/>
-        
+	    <meta name="description" content="Rodney's Blog">
+	    <meta name="author" content="Rodney Gomes">
+
         <link rel="alternate"
               type="application/rss+xml"
               title="Rodney's Corner RSS Feed"
               href="http://feeds.feedburner.com/rlgomesgithubcom/feed"/>
+
+
+	    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+	    <!--[if lt IE 9]>
+	      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	    <![endif]-->
+
+	    <!-- Le styles -->
+	    <link href="/css/bootstrap.css" rel="stylesheet">
+        <link href="/css/main.css" rel="stylesheet"/>
+
+	    <!-- Le fav and touch icons -->
+	    <link rel="shortcut icon" href="images/favicon.ico">
+	    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+	    <link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
+	    <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">
     </head>
     <body>
-        <center>
-            <div id="header">
-                <h1>{{ page.title }}</h1>
-                <span id="contact">rodneygomes <b>(AT)</b> gmail <b>(DOT)</b> com</span>
-            </div>
 
+    <div class="topbar">
+      <div class="fill">
+        <div class="container">
+          <a class="brand" href="/">Rodney's Corner</a>
+          <ul class="nav nav-tab">
+            <li class="active"><a href="/">Blog</a></li>
+            <li><a href="/archive.html">Archive</a></li>
+            <li><a href="/about.html">About</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="content">
+        <div class="page-header">
+          <h1>Blog<small> random thoughts and ideas</small></h1>
+        </div>
+        <div class="row">
+          <div class="span10">
             <div id="body">{{ content }}</div>
-
-            <footer>
-                <div style="text-align: right">Powered by <a href="http://jekyllrb.com/">Jekyll</a></div>
-                <div style="text-align: right">Last Updated: {{site.time}}</div>
-            </footer>
-        </center>
+          </div>
+          <div class="span4">
+            <div id="github-badge"/>
+          </div>
+          <hr/>
+        </div>
+      </div>
+      <footer>
+        <div style="text-align: right">Powered by <a href="http://jekyllrb.com/">Jekyll</a> &amp; <a href="http://twitter.github.com/bootstrap/index.html">Bootstrap</a></div>
+        <div style="text-align: right">Last Updated: {{site.time}}</div>
+      </footer>
+    </div> <!-- /container -->
     </body>
+
+    <script type="text/javascript" charset="utf-8">
+    GITHUB_USERNAME="rlgomes";
+    GITHUB_LIST_LENGTH=5;
+    GITHUB_TITLE = "<h2>Coding</h2>";
+    GITHUB_SHOW_ALL = "Show all";
+    </script>
+    <script src="/libs/github_badges/github-badge-launcher.js" type="text/javascript"></script>
+    <script src="/libs/prototype.js" type="text/javascript"></script>
+    <script src="/libs/scriptaculous.js" type="text/javascript"></script>
+    <script src="/libs/index.js" type="text/javascript"></script>
 </html>

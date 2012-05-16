@@ -5,9 +5,9 @@ published: true
 categories: [haskell,tools,unix]
 ---
 
-Now after having gotten a pretty good overview of how to use Haskell's most 
+Now after having gotten a pretty good overview of how to use Haskell's most
 important features we can now use this newly learned skills to write a clone
-of the 'wc' command line tool completely in Haskell and compare this to what 
+of the 'wc' command line tool completely in Haskell and compare this to what
 the current code for the wc command line tool is written in.
 
 The 'wc' command has the following help menu on my linux box:
@@ -35,24 +35,24 @@ Report wc bugs to bug-coreutils@gnu.org
 GNU coreutils home page: http://www.gnu.org/software/coreutils/
 General help using GNU software: http://www.gnu.org/gethelp/
 For complete documentation, run: info coreutils 'wc invocation'
-</console> 
+</console>
 
-So we're going to try and implement the counting of characters, lines and words 
-and also make sure that we can handle piping of a file to the stdin with our 
-newly created command line tool. 
+So we're going to try and implement the counting of characters, lines and words
+and also make sure that we can handle piping of a file to the stdin with our
+newly created command line tool.
 
-First thing that is required to write a command line tool is a command line 
-parsing library. I choose CmdArgs since I found it worked really well and 
+First thing that is required to write a command line tool is a command line
+parsing library. I choose CmdArgs since I found it worked really well and
 allowed you to easily define the help menu and and summary quite nicely. You can
-read up on this library [here](http://community.haskell.org/~ndm/cmdargs/). 
+read up on this library [here](http://community.haskell.org/~ndm/cmdargs/).
 
-The **CmdArgs** library is really great at expressing what arguments are 
+The **CmdArgs** library is really great at expressing what arguments are
 available and what each of them do. You have to firstly define the datatype
 that identifies the various arguments and their types, like so:
 
 {% highlight hs %}
 data WC = WC {chars :: Bool, lines_ :: Bool, words_ :: Bool}
-    deriving (Show, Data, Typeable)$ 
+    deriving (Show, Data, Typeable)$
 {% endhighlight %}
 
 So the above just defines that we have 3 flags that can be used and each of them
@@ -79,9 +79,9 @@ wc = WC { chars = def &= name "m" &= help "print the byte counts",
 {% endhighlight %}
 
 The above is using the **&=** operator is used to annotation the chars type
-with additional information such as the name of the option and the help to 
-show when displaying this option. The whole **WC** datatype is annotated with 
-the **help** and **summary** which are then used to generate the help menu 
+with additional information such as the name of the option and the help to
+show when displaying this option. The whole **WC** datatype is annotated with
+the **help** and **summary** which are then used to generate the help menu
 like so:
 
 <console>
@@ -101,12 +101,12 @@ Common flags:
   -V --version  Print version information
 </console>
 
-There you have your argument parsing and menu printing all in less than 15 
+There you have your argument parsing and menu printing all in less than 15
 lines of **Haskell**. The next bit we're going to focus on is how do we actually
 count lines, words and characters using **Haskell**. Instead of writing functions
 that can calculate the number of lines/words in a **String** we can easily look
 through the **Prelude** module and find that there are two functions that do the
-trick: **lines** and **words** and using the already familiar function 
+trick: **lines** and **words** and using the already familiar function
 composition we can write:
 
 {% highlight hs %}
@@ -114,34 +114,34 @@ countlines = length . lines
 countwords = length . words
 {% endhighlight %}
 
-Now creating a main function in Haskell requires you understand a few things 
-about the way **IO** is handled. In **Haskell** as mentioned early in my posts is a
-purely functional language and for things such as **IO** which are basically
-side effects within your function **Haskell**. This side-effect is handled by 
-expressing side effects as a **Monad**. Now I won't go into all of the details
-of a **Monad** in this post and I suggest you read up on Monads with these 
-few links:
+Now creating a main function in Haskell requires you understand a few things
+about the way **IO** is handled. In **Haskell** as mentioned early in my posts
+is a purely functional language and for things such as **IO** which are
+basically side effects within your function **Haskell**. This side-effect is
+handled by expressing side effects as a **Monad**. Now I won't go into all of
+the details of a **Monad** in this post and I suggest you read up on Monads with
+these few links:
 
-* [Yet Another Monad Tutorial](http://mvanier.livejournal.com/3917.html) is a 
+* [Yet Another Monad Tutorial](http://mvanier.livejournal.com/3917.html) is a
 great source of informatoin but its very detailed and runs over the course of a
 few posts
 
-* [Monads for functional programming](http://homepages.inf.ed.ac.uk/wadler/papers/marktoberdorf/baastad.pdf) 
-the original **Monad** paper that expresses how to use **Monads** within a 
+* [Monads for functional programming](http://homepages.inf.ed.ac.uk/wadler/papers/marktoberdorf/baastad.pdf)
+the original **Monad** paper that expresses how to use **Monads** within a
 functional language so you can do impure actions within a pure function.
 
-The quick and dirty introduction to **Monads** is tha they're used to do a few 
-things that we take for granted in other imperative languages, such as: 
+The quick and dirty introduction to **Monads** is tha they're used to do a few
+things that we take for granted in other imperative languages, such as:
 exceptions, state, output. In the case of the **main** function has an **IO ()**
-which just means that this function generates output and returns the unit type 
-**()** which I usually view as **void** in Haskell. Lets look at a simple 
+which just means that this function generates output and returns the unit type
+**()** which I usually view as **void** in Haskell. Lets look at a simple
 program that prints 'Hello World':
 
 {% highlight hs %}
 main = putStrLn "Hello World"
 {% endhighlight %}
 
-The function **putStrLn** of course has a type of 
+The function **putStrLn** of course has a type of
 
 {% highlight hs %}
 putStrLn :: String -> IO ()
@@ -149,11 +149,11 @@ putStrLn :: String -> IO ()
 
 The other thing to introduce is the **do** notation which is heavily used along
 side **Monads** because it better expresses the imperative sense of the Monadic
-actions. Its not the only way to express monadic actions but seems to be the 
+actions. Its not the only way to express monadic actions but seems to be the
 easiest to start with for developers coming from the imperative world. I would
 read up on the other available options when trying to chain monadic actions
-becuase you'll find that **Haskell** has very elegant ways of handling this. 
-The notation itself allows you to execute separate statements that are not 
+becuase you'll find that **Haskell** has very elegant ways of handling this.
+The notation itself allows you to execute separate statements that are not
 necessarily used when generating the output of your function. For example:
 
 {% highlight hs %}
@@ -161,9 +161,9 @@ main = do
          putStrLn "Input name:"
          name <- getLine
          putStrLn ("Hi there " ++ name)
-{% endhighlight %} 
+{% endhighlight %}
 
-There you can see some Haskell code that looks extremely like an imperative 
+There you can see some Haskell code that looks extremely like an imperative
 program. Now you don't have to write things like that and can in fact be more
 functional when writing code in **Haskell** and do the same like so:
 
@@ -172,17 +172,17 @@ main = putStrLn "Input name:" >> getLine >>= putStrLn . (++) "Hello there "
 {% endhighlight %}
 
 There are a few new functions being used here which you may already know if read
-the tutorials on **Monads** I previously mentioned but they're not hard to 
+the tutorials on **Monads** I previously mentioned but they're not hard to
 understand the first is **>>** which has the signature:
 
 {% highlight hs %}
 (>>) :: (Monad m) => m a -> m b -> m b
 {% endhighlight %}
 
-What it does is simply accept two monadic actoins and only return the second, 
+What it does is simply accept two monadic actoins and only return the second,
 basically ignore the return from the first function. This was necessary since
 we wanted to print the "Input name:" string but didn't care for its return. The
-**>>=** function on the other hand is the function composition function for 
+**>>=** function on the other hand is the function composition function for
 Monadic functions. Its signature is more familiar:
 
 {% highlight hs %}
@@ -191,23 +191,23 @@ Monadic functions. Its signature is more familiar:
 
 You can easily see what the function does and its purpose with in **Haskell**.
 Then the only other magic done in that one line was to infix the **++** operator
-and use it to concatenate the return of the **getLine** with the "Hello there " 
+and use it to concatenate the return of the **getLine** with the "Hello there "
 string. I really prefer not using the **do** notation when possible just because
 its not as functionally elegant as other available options. I think its a matter
 of taste and you'll find what makes more sense to use in different situations.
 
 So the only thing missing is the ability to handle the input from the standard
 input from our program in our program. In the **Prelude** there is a function
-that allows us to handle the stdin and output directly to the stdout. This is 
+that allows us to handle the stdin and output directly to the stdout. This is
 the **interact** function:
 
 {% highlight hs %}
 interact :: (String -> String) -> IO ()
 {% endhighlight %}
 
-This function will take your **String->String** function and do the required 
+This function will take your **String->String** function and do the required
 **IO ()** output. The input to your function is the whole of the standard input
-and what you'll be returning is the whole of what you want to be printed on 
+and what you'll be returning is the whole of what you want to be printed on
 the screen (ie standard output). So you can basically apply the **countlines**
 function like so:
 
@@ -218,11 +218,11 @@ countlines = show . length . lines
 main = interact countlines
 {% endhighlight %}
 
-I just introduced the module declaration line to also show how to correctly 
-define your module and tell the ghci compilere which function is your main 
-entry point. We had to use the **show** function to convert the number calculated
-by our countlines function back into a **String**. With the above you should be 
-able to run commands such as:
+I just introduced the module declaration line to also show how to correctly
+define your module and tell the ghci compilere which function is your main
+entry point. We had to use the **show** function to convert the number
+calculated by our countlines function back into a **String**. With the above you
+should be able to run commands such as:
 
 <console>
 $ cat test.hs | runhaskell test.hs
@@ -246,13 +246,13 @@ data WC = WC {chars :: Bool, lines_ :: Bool, words_ :: Bool}
 
 wc = WC { chars = def &= name "m" &= help "print the byte counts",
           lines_ = def &= help "print the character counts",
-          words_ = def &= help "print the word counts" } 
-        &= help ("Print newline, word, and byte counts for each FILE, " ++ 
-                 "and a total line if more than one FILE is specified." ++ 
-                 " With no FILE, or when FILE is -, read standard " ++ 
-                 "input.  A word is a non-zero-length sequence of " ++ 
+          words_ = def &= help "print the word counts" }
+        &= help ("Print newline, word, and byte counts for each FILE, " ++
+                 "and a total line if more than one FILE is specified." ++
+                 " With no FILE, or when FILE is -, read standard " ++
+                 "input.  A word is a non-zero-length sequence of " ++
                  "characters delimited by white space.")
-        &= summary "wc v0.0.1, (C) Rodney Gomes" 
+        &= summary "wc v0.0.1, (C) Rodney Gomes"
 
 countwords = show . length . words
 countlines = show . length . lines
@@ -268,35 +268,35 @@ optionHandler _ = flat . ( countlines &&& countwords &&& countchars )
 main = cmdArgs wc >>= interact . optionHandler
 {% endhighlight %}
 
-That is a our implementation of the **wc** command line tool (minus the 
+That is a our implementation of the **wc** command line tool (minus the
 counting of bytes and some of the extended options). There are a few more things
 introduced in this implementation tht weren't covered before such as:
 
-* **&&&** operator, also called the 'fanout' operator which has the following 
-signature ***(&&&) :: a b c -> a b c' -> a b (c, c')*** is basically used to 
-apply the two functions to the same arguemnt and return the result which 
+* **&&&** operator, also called the 'fanout' operator which has the following
+signature ***(&&&) :: a b c -> a b c' -> a b (c, c')*** is basically used to
+apply the two functions to the same arguemnt and return the result which
 consists of the tuples of the results of those two functions. We then created a
-**flat** function to flatten out the result of applying using the **&&&** 
+**flat** function to flatten out the result of applying using the **&&&**
 operator.
 
-* **records pattern matching** - we had introduced the records notation which 
-allows you to basically allows you to define the chars,lines_ and words_ 
-functions which can be used against the **WC** datatype. Now when pattern 
+* **records pattern matching** - we had introduced the records notation which
+allows you to basically allows you to define the chars,lines_ and words_
+functions which can be used against the **WC** datatype. Now when pattern
 matching you can use the same function to match the exact element you're looking
 for and thats what we've done above in the **optionHandler** function.
 
-The most astounding thing about the above piece of code is how many lines we've 
-actually had to write. The above code is exactly 34 lines of code (in its 
-current incarnation) and the source for the current C implementation of the 
-**wc** command line tool in the source of my current **Ubuntu Oneiric** 
-installation is over 700 lines of code. 
+The most astounding thing about the above piece of code is how many lines we've
+actually had to write. The above code is exactly 34 lines of code (in its
+current incarnation) and the source for the current C implementation of the
+**wc** command line tool in the source of my current **Ubuntu Oneiric**
+installation is over 700 lines of code.
 
-Of course lines of code is not a true way to compare software quality between 
-different languages, but it is a measure of complexity. The biggest difference 
-here is how easy it is to read this code vs reading the same program written 
+Of course lines of code is not a true way to compare software quality between
+different languages, but it is a measure of complexity. The biggest difference
+here is how easy it is to read this code vs reading the same program written
 in C. Just looking at the code above you can see how easy it is to add more
 functionality and also how easy it is to read the program.
 
 In the next post we're going to actualy analyze the performance of the **wc**
-command we wrote and see how close we can get to the performance of the C 
+command we wrote and see how close we can get to the performance of the C
 implementation of the wc command.

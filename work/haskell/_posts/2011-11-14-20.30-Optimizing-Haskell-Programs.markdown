@@ -7,23 +7,24 @@ categories: [haskell,optimization,analysis,performance]
 
 Before we start optimizing the **wc** command line tool we wrote lets first find
 a simple way to compare this implementation with the wc command tool available
-on my linux (written in C). I created a file with 197,000 dummy lines (with 
-each line just over 80 characters long) and measured how long it takes to count 
+on my linux (written in C). I created a file with 197,000 dummy lines (with
+each line just over 80 characters long) and measured how long it takes to count
 the number of lines, with each tool:
 
 <console>
-time bash -c "cat testdata | wc -l"
+time bash -c "cat test | wc -l"
 197000
-bash -c "cat testdata | wc -l"  0.00s user 0.02s system 65% cpu 0.043 total
+bash -c "cat test | wc -l"  0.00s user 0.02s system 65% cpu 0.043 total
 
-time bash -c "cat testdata | runhaskell wc.hs -l"
-197000bash -c "cat testdata | runhaskell wc.hs -l"  1.46s user 0.07s system 95% cpu 1.590 total
+time bash -c "cat test | ./wc.hs -l"
+197000
+bash -c "cat test | ./wc.hs -l"  1.46s user 0.07s system 95% cpu 1.590 total
 </console>
 
-So the current **Haskell** implementation is 37x slower than the native C 
-version. The first thing to note is how running the haskell program without 
-compiling is not efficient at all. So lets put together a simple make file and 
-use **ghci** to compile the **.hs** file to a native executable. Here's a 
+So the current **Haskell** implementation is 37x slower than the native C
+version. The first thing to note is how running the haskell program without
+compiling is not efficient at all. So lets put together a simple make file and
+use **ghci** to compile the **.hs** file to a native executable. Here's a
 possible make file:
 
 {% highlight makefile %}
@@ -34,18 +35,19 @@ init:
 wc: wc.hs init
     cd build ; ghc --make wc.hs -o wc
 
-clean: 
+clean:
     rm -fr build *.o *.hi
 {% endhighlight %}
 
 So after a simple compilation the results we're now getting are:
 
 <console>
-time bash -c "cat testdata | build/wc -l"
-197000bash -c "cat testdata | build/wc -l"  0.96s user 0.04s system 95% cpu 1.049 total
+time bash -c "cat test | build/wc -l"
+197000
+bash -c "cat test | build/wc -l"  0.96s user 0.04s system 95% cpu 1.049 total
 </console>
 
-Which puts at at 24x slower which is already some progress with absolutely no 
+Which puts at at 24x slower which is already some progress with absolutely no
 code changes. Now the **ghc** compiler also allows you to use a few optimizing
 flags that can help make the output code quicker. Lets use the basie **-O2**
 optimization and see how much we can gain. We'll actually add the compilation
@@ -61,27 +63,28 @@ directive to the **.hs** file with the following line:
 Now after recompiling, here is the current performance of our tool:
 
 <console>
-time bash -c "cat testdata | build/wc -l"
-197000bash -c "cat testdata | build/wc -l"  0.96s user 0.04s system 95% cpu 1.049 total
+time bash -c "cat test | build/wc -l"
+197000
+bash -c "cat test | build/wc -l"  0.96s user 0.04s system 95% cpu 1.049 total
 </console>
 
 Not much of a boost really and its not a surprise since our program isn't very
-complicated we can't expect the compiler to be able to save time that easily. 
+complicated we can't expect the compiler to be able to save time that easily.
 There are a few things to look at before we start profiling and here's a list
 of the usual suspects when it comes to bad performance in **Haskell**:
 
 1. **String** is painfully slow and is known for being 20x slower than a similar
-C implementation. The fix is to use the **ByteString** type which is known to 
+C implementation. The fix is to use the **ByteString** type which is known to
 only be 2x slower than a similar C implementation.
 
-2. read and show are known to also perform badly and you should use the same 
-functions that manipulate the **ByteString** datatype. 
+2. read and show are known to also perform badly and you should use the same
+functions that manipulate the **ByteString** datatype.
 
-So lets start by importing the required library to use the **ByteString** 
-datatype and using all of the functions that handle **ByteString**. Be aware 
-that it can be a bit of hassle to get your functions working with the 
-**ByteString** data type and quite a bit of work to get all the types lined 
-up just write, but here's what the **wc** command implementation looks like 
+So lets start by importing the required library to use the **ByteString**
+datatype and using all of the functions that handle **ByteString**. Be aware
+that it can be a bit of hassle to get your functions working with the
+**ByteString** data type and quite a bit of work to get all the types lined
+up just write, but here's what the **wc** command implementation looks like
 that now uses **ByteString**s:
 
 {% highlight hs %}
@@ -100,20 +103,20 @@ data WC = WC {chars :: Bool, lines_ :: Bool, words_ :: Bool}
 
 wc = WC { chars = def &= name "m" &= help "print the byte counts",
           lines_ = def &= help "print the character counts",
-          words_ = def &= help "print the word counts" } 
-        &= help ("Print newline, word, and byte counts for each FILE, " ++ 
-                 "and a total line if more than one FILE is specified." ++ 
-                 " With no FILE, or when FILE is -, read standard " ++ 
-                 "input.  A word is a non-zero-length sequence of " ++ 
+          words_ = def &= help "print the word counts" }
+        &= help ("Print newline, word, and byte counts for each FILE, " ++
+                 "and a total line if more than one FILE is specified." ++
+                 " With no FILE, or when FILE is -, read standard " ++
+                 "input.  A word is a non-zero-length sequence of " ++
                  "characters delimited by white space.")
-        &= summary "wc v0.0.1, (C) Rodney Gomes" 
+        &= summary "wc v0.0.1, (C) Rodney Gomes"
 
 countwords = C.pack . show . length . C.words
 countlines = C.pack . show . length . C.lines
 countchars = C.pack . show . C.length
 
 space = C.pack " "
-flat (a,(b,c)) = C.concat( a : space : b : space : c : [] ) 
+flat (a,(b,c)) = C.concat( a : space : b : space : c : [] )
 
 addnl x = C.concat( x : (C.pack "\n") : [])
 optionHandler WC{chars=True} = addnl . countchars
@@ -126,33 +129,33 @@ main = cmdArgs wc >>= C.interact . optionHandler
 
 Just a few tweaks really in terms of the functions being used and how to handle
 the new **ByteString** datatype. I also realized that the tool wasn't outputting
-a necessary newline at the end of the output so I added that. After this small 
-change surprisingly enough we're now really close to the C implementation 
+a necessary newline at the end of the output so I added that. After this small
+change surprisingly enough we're now really close to the C implementation
 speed:
 
 <console>
-time bash -c "cat testdata | build/wc -l"
+time bash -c "cat test | build/wc -l"
 197000
-bash -c "cat testdata | build/wc -l"  0.02s user 0.04s system 77% cpu 0.073 total
+bash -c "cat test | build/wc -l"  0.02s user 0.04s system 77% cpu 0.073 total
 </console>
 
-Now we're still 69% slower than the C implementation which means we have room 
-for improvmenet, but the interesting part is we're actually 72% faster than the 
-C implementation when we have to calculate the numbe of lines, words and 
+Now we're still 69% slower than the C implementation which means we have room
+for improvmenet, but the interesting part is we're actually 72% faster than the
+C implementation when we have to calculate the numbe of lines, words and
 characters at the same time:
 
 <console>
-time bash -c "cat testdata | wc"      
+time bash -c "cat test | wc"
  197000 3743000 19306000
-bash -c "cat testdata | wc"  0.57s user 0.02s system 95% cpu 0.613 total
+bash -c "cat test | wc"  0.57s user 0.02s system 95% cpu 0.613 total
 
-time bash -c "cat testdata | build/wc"   
+time bash -c "cat test | build/wc"
 197000 3743000 19306000
-bash -c "cat testdata | build/wc"  0.30s user 0.04s system 94% cpu 0.357 total
+bash -c "cat test | build/wc"  0.30s user 0.04s system 94% cpu 0.357 total
 </console>
 
-Now we've reached the point where if we want to get our counting of lines to 
-perform as well as the C implementation we're going to have to profile our 
+Now we've reached the point where if we want to get our counting of lines to
+perform as well as the C implementation we're going to have to profile our
 **Haskell** program. To profile we need to compile with a few additional flags:
 
 {% highlight makefile %}
@@ -160,15 +163,16 @@ wc: wc.hs init
     cd build ; ghc -prof -auto-all -rtsopts --make wc.hs -o wc
 {% endhighlight %}
 
-We added the **-prof -auto-all** to build with profiling enabled, the -auto-all 
-generates cost centres for all top level functions, you can read more about that 
-in the **Haskell** documentation on profiling.  When you try to run the 
+We added the **-prof -auto-all** to build with profiling enabled, the -auto-all
+generates cost centres for all top level functions, you can read more about that
+in the **Haskell** documentation on profiling.  When you try to run the
 **make wc** again if you get something like so:
 
 <console>
 wc.hs:7:8:
     Could not find module `System....':
-      Perhaps you haven't installed the profiling libraries for package `cmdargs-0.9'?
+      Perhaps you haven't installed the profiling libraries for package
+                                                                  `cmdargs-0.9'?
       Use -v to see a list of the files searched for.
 </console>
 
@@ -185,7 +189,7 @@ information. You can now run the same command like so:
 wc -l +RTS -p -RTS
 </console>
 
-You'l now have a nice **wc.prof** file to look at which contains information 
+You'l now have a nice **wc.prof** file to look at which contains information
 like this in it (slightly reformatted to fit):
 
 <console>
@@ -200,57 +204,58 @@ COST CENTRE                    MODULE               %time %alloc
 main                           Main                  50.0    1.3
 countlines                     Main                  50.0   98.5
 
-                                                     individual    inherited
-COST CENTRE              MODULE            no.  entries %time %alloc %time %alloc
+                                                    individual    inherited
+COST CENTRE              MODULE            no. entries %time %alloc %time %alloc
 
-MAIN            MAIN                         1     0    0.0    0.0   100.0   100.0
- main           Main                       358     3   50.0    1.3   100.0    99.9
-  optionHandler Main                       361     1    0.0    0.0    50.0    98.5
-   addnl        Main                       363     1    0.0    0.0     0.0     0.0
-   countlines   Main                       362     2   50.0   98.5    50.0    98.5
-  wc            Main                       360     0    0.0    0.0     0.0     0.0
- CAF            Main                       352    33    0.0    0.0     0.0     0.0
-  addnl         Main                       364     0    0.0    0.0     0.0     0.0
-  wc            Main                       359     1    0.0    0.0     0.0     0.0
- CAF            Data.Typeable              350     5    0.0    0.0     0.0     0.0
- CAF            GHC.Show                   348     1    0.0    0.0     0.0     0.0
- CAF            Data.HashTable             290     3    0.0    0.0     0.0     0.0
- CAF            GHC.IO.Handle.FD           288     3    0.0    0.0     0.0     0.0
- CAF            GHC.IO.FD                  272     4    0.0    0.0     0.0     0.0
- CAF            GHC.IO.Handle.Internals    252     1    0.0    0.0     0.0     0.0
- CAF            GHC.IO.Encoding.Iconv      246     2    0.0    0.0     0.0     0.0
- CAF            GHC.Conc.Signal            243     1    0.0    0.0     0.0     0.0
- CAF            Data.Data                  227     3    0.0    0.0     0.0     0.0
- CAF            System.....Implicit.Global 226     3    0.0    0.0     0.0     0.0
- CAF            System.....Implicit.Reader 223     1    0.0    0.0     0.0     0.0
- CAF            Data.Generics.Any.Prelude  222     2    0.0    0.0     0.0     0.0
- CAF            System.....Explicit        209     6    0.0    0.0     0.0     0.0
- CAF            System.....Explicit.Type   202     1    0.0    0.0     0.0     0.0
- CAF            System.....Explicit.Help   189     1    0.0    0.0     0.0     0.0
- CAF            System.....Implicit.Ann    187     4    0.0    0.0     0.0     0.0
- CAF            System.....Annotate        186     1    0.0    0.0     0.0     0.0
- CAF            Data.ByteString.Char8      184     1    0.0    0.0     0.0     0.0
+MAIN            MAIN                         1   0    0.0    0.0   100.0   100.0
+ main           Main                       358   3   50.0    1.3   100.0    99.9
+  optionHandler Main                       361   1    0.0    0.0    50.0    98.5
+   addnl        Main                       363   1    0.0    0.0     0.0     0.0
+   countlines   Main                       362   2   50.0   98.5    50.0    98.5
+  wc            Main                       360   0    0.0    0.0     0.0     0.0
+ CAF            Main                       352  33    0.0    0.0     0.0     0.0
+  addnl         Main                       364   0    0.0    0.0     0.0     0.0
+  wc            Main                       359   1    0.0    0.0     0.0     0.0
+ CAF            Data.Typeable              350   5    0.0    0.0     0.0     0.0
+ CAF            GHC.Show                   348   1    0.0    0.0     0.0     0.0
+ CAF            Data.HashTable             290   3    0.0    0.0     0.0     0.0
+ CAF            GHC.IO.Handle.FD           288   3    0.0    0.0     0.0     0.0
+ CAF            GHC.IO.FD                  272   4    0.0    0.0     0.0     0.0
+ CAF            GHC.IO.Handle.Internals    252   1    0.0    0.0     0.0     0.0
+ CAF            GHC.IO.Encoding.Iconv      246   2    0.0    0.0     0.0     0.0
+ CAF            GHC.Conc.Signal            243   1    0.0    0.0     0.0     0.0
+ CAF            Data.Data                  227   3    0.0    0.0     0.0     0.0
+ CAF            System.....Implicit.Global 226   3    0.0    0.0     0.0     0.0
+ CAF            System.....Implicit.Reader 223   1    0.0    0.0     0.0     0.0
+ CAF            Data.Generics.Any.Prelude  222   2    0.0    0.0     0.0     0.0
+ CAF            System.....Explicit        209   6    0.0    0.0     0.0     0.0
+ CAF            System.....Explicit.Type   202   1    0.0    0.0     0.0     0.0
+ CAF            System.....Explicit.Help   189   1    0.0    0.0     0.0     0.0
+ CAF            System.....Implicit.Ann    187   4    0.0    0.0     0.0     0.0
+ CAF            System.....Annotate        186   1    0.0    0.0     0.0     0.0
+ CAF            Data.ByteString.Char8      184   1    0.0    0.0     0.0     0.0
 </console>
 
-With the above we can now see that we're spending 50% of our time in countlines 
-and the other 50% in the main functio which is most likely in the **interact** 
-function reading the input and 50% of the time parsing and counting in the 
+With the above we can now see that we're spending 50% of our time in countlines
+and the other 50% in the main functio which is most likely in the **interact**
+function reading the input and 50% of the time parsing and counting in the
 **countlines**. Since we don't have access to the **interact** function what
 we can do is create **cost centres** for the **countlines** function and see if
 it identifies something we weren't expect. So we'll add this to our source:
 
 {% highlight hs %}
 countwords = C.pack . show . length . C.words
-countlines = {-# SCC "C.pack" #-} C.pack . {-# SCC "show" #-} show . {-# SCC "length" #-} length . {-# SCC "C.lines" #-} C.lines
+countlines = {-# SCC "C.pack" #-} C.pack . {-# SCC "show" #-} show . \
+             {-# SCC "length" #-} length . {-# SCC "C.lines" #-} C.lines
 countchars = C.pack . show . C.length
 {% endhighlight %}
 
-So when we recompile and run with the above **cost centres** we can then get 
+So when we recompile and run with the above **cost centres** we can then get
 more detail from profiling:
 
 <console>
 COST CENTRE  MODULE        no.    entries  %time %alloc   %time %alloc$
-$                            
+$
 MAIN         MAIN            1           0  75.0    0.5   100.0  100.0$
  C.pack      Main          358           1   0.0    0.0    25.0   99.4$
   show       Main          359           1   0.0    0.0    25.0   99.4$
@@ -258,14 +263,14 @@ MAIN         MAIN            1           0  75.0    0.5   100.0  100.0$
     C.lines  Main          361           1  25.0   99.4    25.0   99.4$
 </console>
 
-We can see that we're spending about 25% of our time each of the places we set 
+We can see that we're spending about 25% of our time each of the places we set
 those **cost centres**. The thing to do now is try to understand why it takes
-25% of the time to do the pack call or the show call when they're just 
+25% of the time to do the pack call or the show call when they're just
 converting an **Int** to **String** and then to a **ByteString**. I just wanted
-to show how to profile an existing tool and that **Haskell** can in fact be as 
+to show how to profile an existing tool and that **Haskell** can in fact be as
 quick as **C** without having to any major changes and using the right types.
 
-So we've pretty much optimized our **wc** implementation and the only thing 
+So we've pretty much optimized our **wc** implementation and the only thing
 left to do is a detailed comparison of the performance of our implementation vs
 the C implementation:
 

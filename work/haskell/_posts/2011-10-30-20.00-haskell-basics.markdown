@@ -6,7 +6,7 @@ categories: [haskell, functional programming]
 ---
 
 I will start my learning of Haskell by first going over how to write a simple
-program in Haskell and have it execute within the Haskell interpreter. Lets 
+program in Haskell and have it execute within the Haskell interpreter. Lets
 start with writing a simple "Hello World" application in Haskell:
 
 {% highlight hs %}
@@ -16,37 +16,37 @@ main = putStrLn "Hello, World!"
 {% endhighlight %}
 
 That is a pretty small program even when you compare to writing hello world in
-an imperative language such as C. I added the shebang to make sure you'd be 
-able to easily run this on a unix system. To run this you'll need to install 
-GHC compiler and intpreter which are supported on all major OS's. For more 
-information on getting GHC on your system have a look at: 
+an imperative language such as C. I added the shebang to make sure you'd be
+able to easily run this on a unix system. To run this you'll need to install
+GHC compiler and intpreter which are supported on all major OS's. For more
+information on getting GHC on your system have a look at:
 http://www.haskell.org/ghc/ .
 
 Lets get into what makes a piece of code in Haskell. So unlike most mainstream
-languages that are imperative or object-oriented, functionl programming 
-languages do not have the notion of a sequence of commands/instructions to 
+languages that are imperative or object-oriented, functionl programming
+languages do not have the notion of a sequence of commands/instructions to
 execute. A functional programming language consists of a collection of functions
 that do a single task and return a result without any side-effects. I'm bringing
-up the topic of side-effects so we can understand early on that you can't do 
+up the topic of side-effects so we can understand early on that you can't do
 any of the following in a function (by default):
 
 * throw an exception, raise an error
 * read/write to any file (including stdin/stdout)
 * change global state (global variables)
 
-Side-effects are not "easily" represented as a pure function in a functional 
-programming language. 
+Side-effects are not "easily" represented as a pure function in a functional
+programming language.
 
-Lets write our first function that takes a number and gives this number plus 
+Lets write our first function that takes a number and gives this number plus
 one:
 
 {% highlight hs %}
 plus1 a = a + 1
 {% endhighlight %}
 
-When writing your functions make sure to always write the signature of the 
-function. Writing the signature helps you understand what you're trying to 
-write as well verifies that you haven't created any scenario in which your 
+When writing your functions make sure to always write the signature of the
+function. Writing the signature helps you understand what you're trying to
+write as well verifies that you haven't created any scenario in which your
 function returns an unexpected result:
 
 {% highlight hs %}
@@ -55,12 +55,12 @@ plus1 a = a + 1
 {% endhighlight %}
 
 As you look at this function you'll find the notation is very similar to when
-you were writing mathematical expressions in school. Of couse now that we have 
-this function lets load it into the ghci shell and try to apply it to a few 
+you were writing mathematical expressions in school. Of couse now that we have
+this function lets load it into the ghci shell and try to apply it to a few
 different values:
 
 <console>
-> ghci 
+> ghci
 GHCi, version 7.0.3: http://www.haskell.org/ghc/  :? for help
 Loading package ghc-prim ... linking ... done.
 Loading package integer-gmp ... linking ... done.
@@ -74,34 +74,34 @@ Ok, modules loaded: Main.
 3
 *Main> plus1 (plus1 2)
 4
-*Main> 
+*Main>
 </console>
 
 Lets jump into deal with lists of data and how to write a few useful functions
-to deal with lists. The first thing to realize is that a list in Haskell is 
+to deal with lists. The first thing to realize is that a list in Haskell is
 very simply represented as:
 
 <pre>
 [1,2,3,4]
 </pre>
 
-A string is a list of Char and therefore has the type \[Char\] and can be 
+A string is a list of Char and therefore has the type \[Char\] and can be
 represented as:
 
 <pre>
 ['a','b','c']
 </pre>
 
-which is in fact the string "abc". Lists can also be expressed using the 
-operator (:) which takes an element and adds it to the another list so the 
+which is in fact the string "abc". Lists can also be expressed using the
+operator (:) which takes an element and adds it to the another list so the
 above list can also be presented as:
 
 <pre>
 1:(2:(3:(4:[])))
-</pre> 
+</pre>
 
 With this operator we can also introduce pattern matching and how to write
-functions that can handle lists. Lets start by writing our very own length 
+functions that can handle lists. Lets start by writing our very own length
 function that can calculate the length of a list. The first thing to write is
 the type of this function:
 
@@ -109,7 +109,7 @@ the type of this function:
 len :: [Int] -> Int
 {% endhighlight %}
 
-The above signature is aready length takes a list of Ints and returns an Int. 
+The above signature is aready length takes a list of Ints and returns an Int.
 We can easily take this a step further and make this function polymorphic which
 allows it to be applied to a list of any type. The signature would look like so:
 
@@ -126,12 +126,12 @@ len [] = 0
 len (x:xs) = len xs + 1
 {% endhighlight %}
 
-This definition reads very simply: the length of an empty list is 0 and the 
+This definition reads very simply: the length of an empty list is 0 and the
 length of a list with an element x and a tail xs is equal to the length of the
-tail plus one. We've introduced here how to do pattern matching on lists and 
+tail plus one. We've introduced here how to do pattern matching on lists and
 also how polymorphism works when you want to create methods that can be used
-against various datatypes that share a common structure. The len function shown 
-can be used against a list of integers as well as a string which is a list 
+against various datatypes that share a common structure. The len function shown
+can be used against a list of integers as well as a string which is a list
 of Chars. Here's an example:
 
 <console>
@@ -145,10 +145,10 @@ Ok, modules loaded: Main.
 13
 </console>
 
-Polymorphism is one of the other things I find that Haskell does really well 
+Polymorphism is one of the other things I find that Haskell does really well
 when compared to other languages. All other languages refer to polymorphism as
 templates and generics and are in no way as elegant or simple to understand as
-polymorphism is in Haskell. 
+polymorphism is in Haskell.
 
 Most of the operations on lists you'll ever need are already implemented in the
 Prelude library. Just search for "haskell prelude" and you'll find all of the
@@ -159,8 +159,8 @@ available functions, but here are a few of the everyday useful ones:
 * **tail** - returns the same list without the first element
 * **init** - returns the same list without the last element
 
-With these functions we can now start to talk about function composition. Which 
-from algebra class when you had function *f* and function *g* and wanted to 
+With these functions we can now start to talk about function composition. Which
+from algebra class when you had function *f* and function *g* and wanted to
 apply it to a single argument you'd write something like so:
 
 <pre>
@@ -178,45 +178,45 @@ f . g = \x -> f(g(x))
 
 We've suddenly introduced 2 other concepts with this defintion:
 
-* **infix functions** - By default functions are defined in a prefix manner 
-which means the function name appears before the arguments. When you want to 
-declare functions that will appears in the middle of their arguments such as 
+* **infix functions** - By default functions are defined in a prefix manner
+which means the function name appears before the arguments. When you want to
+declare functions that will appears in the middle of their arguments such as
 the +,/,- operators then you need to declare them as you see above wrapped
-with brackets and then you can define them with the function name in the 
-middle of the arguments. You can also turn any regular prefix function into 
+with brackets and then you can define them with the function name in the
+middle of the arguments. You can also turn any regular prefix function into
 an infix function by just putting single quotes around it like so: *`div`* is
 now an infix version of the prefix *div* function.
 
-* **lambda expression** - A lambda expression allows you to define an in 
+* **lambda expression** - A lambda expression allows you to define an in
 place function in a more mathematical friendly format. You basically describe
 for each x what the function will do. So for example:<pre>
-\x -> x + 2 
-</pre> declares a function that for each x passed as an argument, the function 
-will returns x plus 2. Lambda expressions are great for saving space and not 
-having to declare additional named functions when you just need a function to 
+\x -> x + 2
+</pre> declares a function that for each x passed as an argument, the function
+will returns x plus 2. Lambda expressions are great for saving space and not
+having to declare additional named functions when you just need a function to
 get the job done there and then.
 
 I'll end this post with a few examples of how function composition works and
-how it can be useful to write functions composed of other well known functions. 
+how it can be useful to write functions composed of other well known functions.
 To start lets take a few of the useful prelude list functions we shown above and
 try to write a few other useful list functions by using composition:
 
 * lets write a function that can give you the penultimate element of a list. We
 can simply call it **penult**
-* lets write a function that can give you the same list without the first and 
+* lets write a function that can give you the same list without the first and
 last element and we'll call it **middle**
 
-So for the **penult** function we can compose the functions **init** and 
-**last**, the first will give us the list without the last element and the 
-**last** call will give us the last element of that list which is the penultimate
-element, like so:
+So for the **penult** function we can compose the functions **init** and
+**last**, the first will give us the list without the last element and the
+**last** call will give us the last element of that list which is the
+penultimate element, like so:
 
 {% highlight hs %}
 penult :: [a] -> a
-penult = last . init 
+penult = last . init
 {% endhighlight %}
 
-and the **middle** function is the composition of the **init** and **tail** 
+and the **middle** function is the composition of the **init** and **tail**
 functions, like this:
 
 {% highlight hs %}
@@ -224,12 +224,12 @@ midddle :: [a] -> [a]
 middle = tail . init
 {% endhighlight %}
 
-By now you can see that the Haskell language is extremely powerful and allows 
+By now you can see that the Haskell language is extremely powerful and allows
 you to take existing functions and put them together in a very simple way that
-alows you to create new and useful functions quickly and cleanly. 
+alows you to create new and useful functions quickly and cleanly.
 
-In my next post I'll start to dive into custom data types and how to pattern 
+In my next post I'll start to dive into custom data types and how to pattern
 match those when writing your own functions and hopefully get into representing
-Trees, Graphs and other datatypes and how writing functions for those in a 
+Trees, Graphs and other datatypes and how writing functions for those in a
 functional language is extremely clean and simple.
 

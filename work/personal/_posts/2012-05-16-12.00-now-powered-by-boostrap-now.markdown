@@ -1,0 +1,29 @@
+---
+layout: post
+title: Now powered by bootstrap now
+published: true
+---
+
+Finally decided the blog required a more professional and better look & feel to
+it and at the same time wanted to learn a bit more about this [**Bootstrap**](http://twitter.github.com/bootstrap/)
+framework that some engineers at **Twitter** had released.
+
+I started by simply having a look at the available examples in the source code
+and the basic templates and was quickly able to get a grasp on how to use this
+along with [**Jekyll**](http://jekyllrb.com/) to make my site look way more
+professional.
+
+Having spent a total of about 8 hours on the task I am completely satisfied
+with the new look and will make further changes in the weeks to come as I
+find small visual issues that I haven't already fixed. To get an idea here is
+a screenshot of what the site use to look like before using bootstrap:
+
+<center>
+<img width="640" src="/images/2012/may/old_site_look.png"/>
+</center>
+
+And now powered by **Bootstrap**:
+
+<center>
+<img width="640" src="/images/2012/may/new_site_look.png"/>
+</center>

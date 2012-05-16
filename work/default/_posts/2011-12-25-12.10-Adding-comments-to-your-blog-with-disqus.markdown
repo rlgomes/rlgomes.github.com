@@ -5,38 +5,38 @@ published: true
 categories: [blog,comments]
 ---
 
-This is just a quick write up on how easy it is to add comments to your blog or 
-site with [Disqus](http://disqus.com). You'll need to create an account at 
-disqus. Once that is done you can go to your dashboard and add a new site for 
-the specific site you want to track comments on. The last step is to simple 
+This is just a quick write up on how easy it is to add comments to your blog or
+site with [Disqus](http://disqus.com). You'll need to create an account at
+disqus. Once that is done you can go to your dashboard and add a new site for
+the specific site you want to track comments on. The last step is to simple
 follow the instructions at **Install** section within your new sites admin page.
 
 In my case all I had to add was:
 
 <console>
-<code>&lt;div id="disqus_thread"&gt;&lt;/div&gt;
+&lt;div id="disqus_thread"&gt;&lt;/div&gt;
 &lt;script type="text/javascript"&gt;
     /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
     // required: replace example with your forum shortname
-    var disqus_shortname = 'example'; 
+    var disqus_shortname = 'example';
 
     /* * * DON'T EDIT BELOW THIS LINE * * */
     (function() {
-        var dsq = document.createElement('script'); 
+        var dsq = document.createElement('script');
         dsq.type = 'text/javascript'; dsq.async = true;
         dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || 
+        (document.getElementsByTagName('head')[0] ||
          document.getElementsByTagName('body')[0]).appendChild(dsq);
     })();
 &lt;/script&gt;
-&lt;noscript&gt;Please enable JavaScript to view the 
-&lt;a href="http://disqus.com/?ref_noscript"&gt;comments powered by Disqus.&lt;/a&gt;&lt;/noscript&gt;
-&lt;a href="http://disqus.com" class="dsq-brlink"&gt;blog comments powered by 
+&lt;noscript&gt;Please enable JavaScript to view the
+&lt;a href="http://disqus.com/?ref_noscript"
+&gt;comments powered by Disqus.&lt;/a&gt;&lt;/noscript&gt;
+&lt;a href="http://disqus.com" class="dsq-brlink"&gt;blog comments powered by
 &lt;span class="logo-disqus"&gt;Disqus&lt;/span&gt;&lt;/a&gt;
-</code>
 </console>
 
-Once I replaced the 'example' disqus shortname with the shortname of my site 
+Once I replaced the 'example' disqus shortname with the shortname of my site
 everything worked perfectly. The only thing you'll find is that if you have
 a static blog with jekyll as I do you won't be able to see the comments on the
 static site when you startup jekyll locally with the "jekyll --server" command.
