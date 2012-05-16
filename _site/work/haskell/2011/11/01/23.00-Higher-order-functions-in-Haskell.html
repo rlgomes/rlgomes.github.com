@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Higher order functions in Haskell</title>
+        <meta name="description" content="Rodney's Blog">
+        <meta name="author" content="Rodney Gomes">
+
+        <link rel="alternate"
+              type="application/rss+xml"
+              title="Rodney's Corner RSS Feed"
+              href="http://feeds.feedburner.com/rlgomesgithubcom/feed"/>
+
+        <link href="/css/bootstrap.css" rel="stylesheet">
+        <link href="/css/main.css" rel="stylesheet"/>
+    </head>
+    <body>
+
+    <div class="topbar">
+      <div class="fill">
+        <div class="container">
+          <a class="brand" href="/">Rodney's Corner</a>
+          <ul class="nav">
+            <li class="active"><a href="/">Blog</a></li>
+            <li><a href="/archive.html">Archive</a></li>
+            <li><a href="/about.html">About</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="content">
+        <div class="page-header">
+          <h1>Higher order functions in Haskell</h1>
+        </div>
+        <div class="row">
+          <div class="span10">
+             <article>
+                   <div id="post.body"><p>From Haskell&#8217;s documentation: &#8220;A higher-order function is a function that takes other functions as arguments or returns a function as result.&#8221;. With this in mind lets start by writing a few functions over lists:</p>
+<div class='highlight'><pre><code class='hs'><span class='nf'>addone</span> <span class='ow'>::</span> <span class='p'>[</span><span class='n'>a</span><span class='p'>]</span> <span class='ow'>-&gt;</span> <span class='p'>[</span><span class='n'>a</span><span class='p'>]</span>
+<span class='nf'>addone</span> <span class='kt'>[]</span> <span class='ow'>=</span> <span class='kt'>[]</span>
+<span class='nf'>addone</span> <span class='p'>(</span><span class='n'>x</span><span class='kt'>:</span><span class='n'>xs</span><span class='p'>)</span> <span class='ow'>=</span> <span class='p'>(</span><span class='n'>x</span><span class='o'>+</span><span class='mi'>1</span><span class='p'>)</span> <span class='kt'>:</span> <span class='n'>addone</span><span class='p'>(</span><span class='n'>xs</span><span class='p'>)</span>
+
+<span class='nf'>divlist</span> <span class='ow'>::</span> <span class='p'>(</span><span class='kt'>Fractional</span> <span class='n'>a</span><span class='p'>)</span> <span class='ow'>=&gt;</span> <span class='p'>[</span><span class='n'>a</span><span class='p'>]</span> <span class='ow'>-&gt;</span> <span class='n'>a</span> <span class='ow'>-&gt;</span> <span class='p'>[</span><span class='n'>a</span><span class='p'>]</span>
+<span class='nf'>divlist</span> <span class='kt'>[]</span> <span class='kr'>_</span> <span class='ow'>=</span> <span class='kt'>[]</span>
+<span class='nf'>divlist</span> <span class='p'>(</span><span class='n'>x</span><span class='kt'>:</span><span class='n'>xs</span><span class='p'>)</span> <span class='n'>n</span> <span class='ow'>=</span> <span class='p'>(</span><span class='n'>x</span> <span class='o'>/</span> <span class='n'>n</span><span class='p'>)</span> <span class='kt'>:</span> <span class='n'>divlist</span> <span class='n'>xs</span> <span class='n'>n</span>
+</code></pre>
+</div>
+<p>We could add a few others but the idea here is that we have to write a new function everytime we want to traverse a list of elements and apply a function to these elements while recreating the list in the same order. What we realy need is a function with the following signature:</p>
+<div class='highlight'><pre><code class='hs'><span class='nf'>applyf</span> <span class='ow'>::</span> <span class='p'>(</span><span class='n'>a</span> <span class='ow'>-&gt;</span> <span class='n'>b</span><span class='p'>)</span> <span class='ow'>-&gt;</span> <span class='p'>[</span><span class='n'>a</span><span class='p'>]</span> <span class='ow'>-&gt;</span> <span class='p'>[</span><span class='n'>b</span><span class='p'>]</span>
+</code></pre>
+</div>
+<p>You can see that the function takes a function that transforms <strong>a to b</strong>&#8217;s and a list of <strong>a</strong>&#8217;s to create a list of <strong>b</strong>&#8217;s. We can even define the applyf function quite easily as:</p>
+<div class='highlight'><pre><code class='hs'><span class='nf'>applyf</span> <span class='ow'>::</span> <span class='p'>(</span><span class='n'>a</span> <span class='ow'>-&gt;</span> <span class='n'>b</span><span class='p'>)</span> <span class='ow'>-&gt;</span> <span class='p'>[</span><span class='n'>a</span><span class='p'>]</span> <span class='ow'>-&gt;</span> <span class='p'>[</span><span class='n'>b</span><span class='p'>]</span>
+<span class='nf'>applyf</span> <span class='n'>f</span> <span class='kt'>[]</span> <span class='ow'>=</span> <span class='kt'>[]</span>
+<span class='nf'>applyf</span> <span class='n'>f</span> <span class='p'>(</span><span class='n'>x</span><span class='kt'>:</span><span class='n'>xs</span><span class='p'>)</span> <span class='ow'>=</span> <span class='p'>(</span><span class='n'>f</span> <span class='n'>x</span><span class='p'>)</span> <span class='kt'>:</span> <span class='n'>applyf</span> <span class='n'>f</span> <span class='n'>xs</span>
+</code></pre>
+</div>
+<p>There actually already exists an <strong>applyf</strong> function called <strong>map</strong> in the Haskell Prelude library. Lets show how to quickly redefine the <strong>addone</strong> and <strong>divlist</strong> function using the <strong>map</strong> function:</p>
+<div class='highlight'><pre><code class='hs'><span class='nf'>addone</span> <span class='ow'>=</span> <span class='n'>map</span> <span class='p'>(</span><span class='o'>+</span><span class='mi'>1</span><span class='p'>)</span>
+<span class='nf'>divlist</span> <span class='n'>n</span> <span class='ow'>=</span> <span class='n'>map</span> <span class='p'>(</span><span class='o'>/</span><span class='n'>n</span><span class='p'>)</span>
+</code></pre>
+</div>
+<p>You can quickly see how to use <strong>map</strong> to basically apply any function to a list of items and get back the list of the results. We can now start to introduce a few other high order functions that are in the Prelude library:</p>
+
+<ul>
+<li><strong>filter</strong> - the filter function takes a boolean function as an argument and removes allelements from the input list that do not satisfy the boolean function. This is very useful when you want to quickly filter out elements based on a simple boolean function such as filtering a list of tuples in which the second element is the age and we the list to contain only the teenagers:</li>
+</ul>
+<div class='highlight'><pre><code class='hs'><span class='nf'>filterTeens</span> <span class='ow'>=</span> <span class='n'>filter</span> <span class='p'>(</span><span class='nf'>\</span><span class='n'>x</span> <span class='ow'>-&gt;</span> <span class='n'>snd</span><span class='p'>(</span><span class='n'>x</span><span class='p'>)</span> <span class='o'>&gt;</span> <span class='mi'>12</span> <span class='o'>&amp;&amp;</span> <span class='n'>snd</span><span class='p'>(</span><span class='n'>x</span><span class='p'>)</span> <span class='o'>&lt;</span> <span class='mi'>20</span><span class='p'>)</span>
+</code></pre>
+</div>
+<ul>
+<li>
+<p><strong>foldl</strong> - reduces a list of elements down to a simple object by applying a function you supplied and a starting value. You can use this to quickly sum up a list of values or even concatenate a list of strings, here are a few examples: <div class='highlight'><pre><code class='hs'><span class='nf'>sumlist</span> <span class='ow'>=</span> <span class='n'>foldl</span> <span class='p'>(</span><span class='o'>+</span><span class='p'>)</span> <span class='mi'>0</span>
+<span class='nf'>concatlist</span> <span class='ow'>=</span> <span class='n'>foldl</span> <span class='p'>(</span><span class='o'>++</span><span class='p'>)</span> <span class='s'>&quot;&quot;</span>
+</code></pre>
+</div></p>
+</li>
+
+<li>
+<p><strong>foldr</strong> - same as foldl but starts the &#8220;folding&#8221; from the end of the list which can have a completely different meaning depending on the folding operation being used.</p>
+</li>
+</ul>
+
+<p>There are many other higher order functions that are extremely useful when wanting to apply transformations to lists. These functions can also be generalized to other structures such as the <strong>Tree</strong> data that we introduced in the previous post. We&#8217;ll leave the creation of a map, filter for <strong>Tree</strong> as an exercise for those who are interested in testing out their skills.</p></div>
+             </article>
+             <hr/>
+             <div id="disqus_thread"></div>
+             <script type="text/javascript">
+                    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                    var disqus_shortname = 'rodneyscorner'; // required: replace example with your forum shortname
+
+                    /* * * DON'T EDIT BELOW THIS LINE * * */
+                    (function() {
+                        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                    })();
+              </script>
+              <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+              <a href="http://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a>
+          </div>
+          <div class="span4">
+            
+                <h2>Related Posts</h2>
+                <ul>
+                    
+                    <li><a href="/work/haskell/2011/11/14/20.30-Optimizing-Haskell-Programs.html">Optimizing Haskell Programs</a></li>
+                    
+                    <li><a href="/work/haskell/2011/11/13/13.00-Writing-wc-command-line-tool-in-Haskell.html">Writing wc command line tool in Haskell</a></li>
+                    
+                    <li><a href="/work/haskell/2011/11/08/22.30-Advanced-Typeclasses.html">Advanced Typeclasses</a></li>
+                    
+                    <li><a href="/work/haskell/2011/10/31/20.00-Custom-data-types-in-Haskell.html">Custom data types in Haskell</a></li>
+                    
+                    <li><a href="/work/haskell/2011/10/30/20.00-haskell-basics.html">Haskell Basics</a></li>
+                    
+                </ul>
+            
+          </div>
+        </div>
+      </div>
+      <footer>
+        <div style="text-align: right">Powered by <a href="http://jekyllrb.com/">Jekyll</a> &amp; <a href="http://twitter.github.com/bootstrap/index.html">Bootstrap</a></div>
+        <div style="text-align: right">Last Updated: Wed May 16 16:16:15 -0700 2012</div>
+      </footer>
+    </div> <!-- /container -->
+</html>

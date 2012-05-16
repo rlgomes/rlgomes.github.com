@@ -1,0 +1,9 @@
+
+- finish applying the same style changes to the other archives, posts layouts
+  find out how to make the page move around on the top bar nicely (move to about
+  and contact info without a full refresh ?)
+
+- lookup how others are using bootstrap to create blogs and sites.
+
+- write a post on moving to using twitter's bootstrap and how much more professional
+  the blog looks now :)

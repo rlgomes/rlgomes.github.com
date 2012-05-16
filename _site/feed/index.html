@@ -1,0 +1,1377 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+ 
+ <title></title>
+ <link href="http://rlgomes.github.com/atom.xml" rel="self"/>
+ <link href="http://rlgomes.github.com/"/>
+ <updated>2012-05-16T16:16:15-07:00</updated>
+ <id>http://rlgomes.github.com/</id>
+ <author>
+   <name>Rodney Gomes</name>
+   <email>rodneygomes@gmail.com</email>
+ </author>
+
+ 
+ <entry>
+   <title>Now powered by bootstrap now</title>
+   <link href="http://rlgomes.github.com/work/personal/2012/05/16/12.00-now-powered-by-boostrap-now.html"/>
+   <updated>2012-05-16T00:00:00-07:00</updated>
+   <id>http://rlgomes.github.com/work/personal/2012/05/16/12.00-now-powered-by-boostrap-now</id>
+   <content type="html">&lt;p&gt;Finally decided the blog required a more professional and better look &amp;amp; feel to it and at the same time wanted to learn a bit more about this &lt;a href='http://twitter.github.com/bootstrap/'&gt;&lt;strong&gt;Bootstrap&lt;/strong&gt;&lt;/a&gt; framework that some engineers at &lt;strong&gt;Twitter&lt;/strong&gt; had released.&lt;/p&gt;
+
+&lt;p&gt;I started by simply having a look at the available examples in the source code and the basic templates and was quickly able to get a grasp on how to use this along with &lt;a href='http://jekyllrb.com/'&gt;&lt;strong&gt;Jekyll&lt;/strong&gt;&lt;/a&gt; to make my site look way more professional.&lt;/p&gt;
+
+&lt;p&gt;Having spent a total of about 8 hours on the task I am completely satisfied with the new look and will make further changes in the weeks to come as I find small visual issues that I haven&amp;#8217;t already fixed. To get an idea here is a screenshot of what the site use to look like before using bootstrap:&lt;/p&gt;
+&lt;center&gt;
+&lt;img src='/images/2012/may/old_site_look.png' width='640' /&gt;
+&lt;/center&gt;
+&lt;p&gt;And now powered by &lt;strong&gt;Bootstrap&lt;/strong&gt;:&lt;/p&gt;
+&lt;center&gt;
+&lt;img src='/images/2012/may/new_site_look.png' width='640' /&gt;
+&lt;/center&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Tuning the Java Garbage Collector</title>
+   <link href="http://rlgomes.github.com/work/java/language/2011/12/30/17.12-Tuning-the-Java-garbage-collector.html"/>
+   <updated>2011-12-30T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/java/language/2011/12/30/17.12-Tuning-the-Java-garbage-collector</id>
+   <content type="html">&lt;p&gt;Recently, I&amp;#8217;ve found a few situations where when writing a prototype for multi-node storage software that I want to be able to gaurantee the stability of my performance numbers as the number of concurent requests grows and the JVM is under high stress where the GC kicks in more often and has the unfortunate effect of adding higher latency to your requests.&lt;/p&gt;
+
+&lt;p&gt;Recently, I wanted to learn a bit more about the Java GC and how an applications performance can be &amp;#8220;fixed&amp;#8221; by tweaking the garbage collector being used. We&amp;#8217;ll start by creating an application that will force the JVM to garbage collect more often: Call a function in a loop and this function will create a large object and calculate something complex (log(n)) and then throw away the object.&lt;/p&gt;
+
+&lt;p&gt;We will always run the application with the JVM option: &lt;strong&gt;&amp;#8220;-Xmx64M&amp;#8221;&lt;/strong&gt; which basically means we can&amp;#8217;t use more than 64MB during our test runs and this allows us to force the GC to kick-in more oftenly. Our slow/bad application can be as simple as:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='java'&gt;&lt;span class='cm'&gt;/**&lt;/span&gt;
+&lt;span class='cm'&gt; * Call a function in a loop and this function will create a large object&lt;/span&gt;
+&lt;span class='cm'&gt; * and calculate something complex (log(n)) and then throw away the object.&lt;/span&gt;
+&lt;span class='cm'&gt; */&lt;/span&gt;
+&lt;span class='kd'&gt;public&lt;/span&gt; &lt;span class='kd'&gt;class&lt;/span&gt; &lt;span class='nc'&gt;BadApp1&lt;/span&gt; &lt;span class='o'&gt;{&lt;/span&gt;
+
+    &lt;span class='cm'&gt;/**&lt;/span&gt;
+&lt;span class='cm'&gt;     * Generate a large array of integers and then calculate which is the&lt;/span&gt;
+&lt;span class='cm'&gt;     * maximum value and returns that releasing the large object previously&lt;/span&gt;
+&lt;span class='cm'&gt;     * created.&lt;/span&gt;
+&lt;span class='cm'&gt;     */&lt;/span&gt;
+    &lt;span class='kd'&gt;public&lt;/span&gt; &lt;span class='kd'&gt;static&lt;/span&gt; &lt;span class='kt'&gt;int&lt;/span&gt; &lt;span class='nf'&gt;maximum_random&lt;/span&gt;&lt;span class='o'&gt;()&lt;/span&gt; &lt;span class='o'&gt;{&lt;/span&gt;
+        &lt;span class='kt'&gt;int&lt;/span&gt;&lt;span class='o'&gt;[]&lt;/span&gt; &lt;span class='n'&gt;random_integers&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='k'&gt;new&lt;/span&gt; &lt;span class='kt'&gt;int&lt;/span&gt;&lt;span class='o'&gt;[&lt;/span&gt;&lt;span class='mi'&gt;10&lt;/span&gt;&lt;span class='o'&gt;*&lt;/span&gt;&lt;span class='mi'&gt;1024&lt;/span&gt;&lt;span class='o'&gt;*&lt;/span&gt;&lt;span class='mi'&gt;1024&lt;/span&gt;&lt;span class='o'&gt;];&lt;/span&gt;
+        &lt;span class='kt'&gt;int&lt;/span&gt; &lt;span class='n'&gt;maximum&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='n'&gt;random_integers&lt;/span&gt;&lt;span class='o'&gt;[&lt;/span&gt;&lt;span class='mi'&gt;0&lt;/span&gt;&lt;span class='o'&gt;];&lt;/span&gt;
+
+        &lt;span class='k'&gt;for&lt;/span&gt; &lt;span class='o'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;int&lt;/span&gt; &lt;span class='n'&gt;value&lt;/span&gt; &lt;span class='o'&gt;:&lt;/span&gt; &lt;span class='n'&gt;random_integers&lt;/span&gt;&lt;span class='o'&gt;)&lt;/span&gt; &lt;span class='o'&gt;{&lt;/span&gt;
+            &lt;span class='k'&gt;if&lt;/span&gt; &lt;span class='o'&gt;(&lt;/span&gt; &lt;span class='n'&gt;maximum&lt;/span&gt; &lt;span class='o'&gt;&amp;lt;&lt;/span&gt; &lt;span class='n'&gt;value&lt;/span&gt; &lt;span class='o'&gt;)&lt;/span&gt; &lt;span class='n'&gt;maximum&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='n'&gt;value&lt;/span&gt;&lt;span class='o'&gt;;&lt;/span&gt;
+        &lt;span class='o'&gt;}&lt;/span&gt;
+
+        &lt;span class='k'&gt;return&lt;/span&gt; &lt;span class='n'&gt;maximum&lt;/span&gt;&lt;span class='o'&gt;;&lt;/span&gt;
+    &lt;span class='o'&gt;}&lt;/span&gt;
+
+    &lt;span class='kd'&gt;public&lt;/span&gt; &lt;span class='kd'&gt;static&lt;/span&gt; &lt;span class='kt'&gt;void&lt;/span&gt; &lt;span class='nf'&gt;main&lt;/span&gt;&lt;span class='o'&gt;(&lt;/span&gt;&lt;span class='n'&gt;String&lt;/span&gt;&lt;span class='o'&gt;[]&lt;/span&gt; &lt;span class='n'&gt;args&lt;/span&gt;&lt;span class='o'&gt;)&lt;/span&gt; &lt;span class='o'&gt;{&lt;/span&gt;
+
+        &lt;span class='kt'&gt;long&lt;/span&gt; &lt;span class='n'&gt;durations&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='mi'&gt;0&lt;/span&gt;&lt;span class='o'&gt;;&lt;/span&gt;
+        &lt;span class='kt'&gt;long&lt;/span&gt; &lt;span class='n'&gt;duration&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='mi'&gt;0&lt;/span&gt;&lt;span class='o'&gt;;&lt;/span&gt;
+        &lt;span class='kt'&gt;long&lt;/span&gt; &lt;span class='n'&gt;start&lt;/span&gt;&lt;span class='o'&gt;,&lt;/span&gt; &lt;span class='n'&gt;stop&lt;/span&gt;&lt;span class='o'&gt;;&lt;/span&gt;
+        &lt;span class='k'&gt;for&lt;/span&gt;&lt;span class='o'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;int&lt;/span&gt; &lt;span class='n'&gt;i&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='mi'&gt;0&lt;/span&gt;&lt;span class='o'&gt;;&lt;/span&gt; &lt;span class='n'&gt;i&lt;/span&gt; &lt;span class='o'&gt;&amp;lt;&lt;/span&gt; &lt;span class='mi'&gt;100&lt;/span&gt;&lt;span class='o'&gt;;&lt;/span&gt; &lt;span class='n'&gt;i&lt;/span&gt;&lt;span class='o'&gt;++)&lt;/span&gt; &lt;span class='o'&gt;{&lt;/span&gt;
+            &lt;span class='n'&gt;start&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='n'&gt;System&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='na'&gt;currentTimeMillis&lt;/span&gt;&lt;span class='o'&gt;();&lt;/span&gt;
+            &lt;span class='n'&gt;maximum_random&lt;/span&gt;&lt;span class='o'&gt;();&lt;/span&gt;
+            &lt;span class='n'&gt;stop&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='n'&gt;System&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='na'&gt;currentTimeMillis&lt;/span&gt;&lt;span class='o'&gt;();&lt;/span&gt;
+            &lt;span class='n'&gt;duration&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='o'&gt;(&lt;/span&gt;&lt;span class='n'&gt;stop&lt;/span&gt;&lt;span class='o'&gt;-&lt;/span&gt;&lt;span class='n'&gt;start&lt;/span&gt;&lt;span class='o'&gt;);&lt;/span&gt;
+            &lt;span class='n'&gt;durations&lt;/span&gt; &lt;span class='o'&gt;+=&lt;/span&gt; &lt;span class='n'&gt;duration&lt;/span&gt;&lt;span class='o'&gt;;&lt;/span&gt;
+            &lt;span class='n'&gt;System&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='na'&gt;out&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='na'&gt;println&lt;/span&gt;&lt;span class='o'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;calculation took &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;+&lt;/span&gt; &lt;span class='n'&gt;duration&lt;/span&gt; &lt;span class='o'&gt;+&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;ms&amp;quot;&lt;/span&gt;&lt;span class='o'&gt;);&lt;/span&gt;
+        &lt;span class='o'&gt;}&lt;/span&gt;
+
+        &lt;span class='n'&gt;System&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='na'&gt;out&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='na'&gt;println&lt;/span&gt;&lt;span class='o'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;average duration was &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;+&lt;/span&gt; &lt;span class='n'&gt;durations&lt;/span&gt;&lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='mi'&gt;100&lt;/span&gt; &lt;span class='o'&gt;+&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;ms&amp;quot;&lt;/span&gt;&lt;span class='o'&gt;);&lt;/span&gt;
+    &lt;span class='o'&gt;}&lt;/span&gt;
+&lt;span class='o'&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;When we start analyzing how much time it takes to run that program and in each iteration print out how long we spent calculating the maximum value along with running with the following options:&lt;/p&gt;
+
+&lt;p&gt;java -Xmx64M -XX:+PrintGCApplicationStoppedTime BadApp1&lt;/p&gt;
+
+&lt;p&gt;The &lt;strong&gt;-XX:+PrintGCAppliactionStoppedTime&lt;/strong&gt; tells the JVM to print out exactly how much time is the GC taking and not allowing the application to do its work. Here is a quick output of what I&amp;#8217;m currently getting on my system:&lt;/p&gt;
+&lt;console&gt;
+&gt;java -Xmx64M -XX:+PrintGCApplicationStoppedTime BadApp1
+...
+Total time for which application threads were stopped: 0.0117340 seconds
+calculation took 68ms
+Total time for which application threads were stopped: 0.0116940 seconds
+calculation took 69ms
+average duration was 69ms
+&lt;/console&gt;
+&lt;p&gt;Now we can see that we&amp;#8217;re spending a good 0.012s in garbage collection code on every single iteration, which is basically 12ms of time in each of those 69ms of average time spent calling that &amp;#8220;bad&amp;#8221; function.&lt;/p&gt;
+
+&lt;p&gt;Before we start trying out different garbage collectors and tweaking their settings you should read some of the following links first:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;http://www.oracle.com/technetwork/systems/index-156457.html&lt;/li&gt;
+
+&lt;li&gt;http://www.petefreitag.com/articles/gctuning/&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;if you want a better explanation of how the various garbage collectors work.&lt;/p&gt;
+
+&lt;p&gt;So getting back to our situation we&amp;#8217;re suffering a 12ms overhead from the GC in every execution of ours and would like to reduce that by tuning the GC. The first idea might be to try and use the &lt;strong&gt;Parallel Copy Collector&lt;/strong&gt; and see if this reduces the over head slightly:&lt;/p&gt;
+&lt;console&gt;
+&gt; java -Xmx64M -XX:+UseParNewGC -XX:+PrintGCApplicationStoppedTime BadApp1
+...
+Total time for which application threads were stopped: 0.0110810 seconds
+calculation took 64ms
+Total time for which application threads were stopped: 0.0075140 seconds
+calculation took 62ms
+average duration was 65ms
+&lt;/console&gt;
+&lt;p&gt;A very minimal improvement which isn&amp;#8217;t totally new since the only thing being done by this garbage collector is to have a thread per core when collecting the young generation garbage. Since my machine is a dual core machine and there really is only 1 object to garbage collect in my code then I don&amp;#8217;t expect almost any improvement.&lt;/p&gt;
+
+&lt;p&gt;For the particular application that we wrote could benefit from a garbage collector that has to deal with a large young generation and as the documentation states:&lt;/p&gt;
+
+&lt;p&gt;&amp;#8220;Use the throughput collector when you want to improve the performance of your application with larger numbers of processors. In the default collector garbage collection is done by one thread, and therefore garbage collection adds to the serial execution time of the application. The throughput collector uses multiple threads to execute a minor collection and so reduces the serial execution time of the application.&amp;#8221;&lt;/p&gt;
+
+&lt;p&gt;So lets see what the benefit is like:&lt;/p&gt;
+&lt;console&gt;
+&gt;java -Xmx64M -XX:+UseParallelGC -XX:+PrintGCApplicationStoppedTime BadApp1
+...
+Total time for which application threads were stopped: 0.0042150 seconds
+calculation took 46ms
+Total time for which application threads were stopped: 0.0053080 seconds
+calculation took 45ms
+average duration was 48ms
+&lt;/console&gt;
+&lt;p&gt;Now we&amp;#8217;re 30% faster just by making a better choice in the GC being used. We&amp;#8217;ve gotten this &amp;#8220;additional boost in performance&amp;#8221; by now spending just 4ms per GC.&lt;/p&gt;
+
+&lt;p&gt;In general you don&amp;#8217;t go about fiddling with the garbage collector unless you&amp;#8217;ve noticed your application isn&amp;#8217;t behaving as you would expect it to and that you&amp;#8217;re unable to gaurantee stable performance behavior and after some investigation have found that the GC is in fact to be &amp;#8220;blamed&amp;#8221;. There are plenty of other situations in which tuning the GC can lead to a better performing Java application but I just wanted to show that even a badly written application can be &amp;#8220;fixed&amp;#8221; by a small change to the GC that is being used.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Adding comments to your blog with disqus</title>
+   <link href="http://rlgomes.github.com/work/default/2011/12/25/12.10-Adding-comments-to-your-blog-with-disqus.html"/>
+   <updated>2011-12-25T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/default/2011/12/25/12.10-Adding-comments-to-your-blog-with-disqus</id>
+   <content type="html">&lt;p&gt;This is just a quick write up on how easy it is to add comments to your blog or site with &lt;a href='http://disqus.com'&gt;Disqus&lt;/a&gt;. You&amp;#8217;ll need to create an account at disqus. Once that is done you can go to your dashboard and add a new site for the specific site you want to track comments on. The last step is to simple follow the instructions at &lt;strong&gt;Install&lt;/strong&gt; section within your new sites admin page.&lt;/p&gt;
+
+&lt;p&gt;In my case all I had to add was:&lt;/p&gt;
+&lt;console&gt;
+&amp;lt;div id=&quot;disqus_thread&quot;&amp;gt;&amp;lt;/div&amp;gt;
+&amp;lt;script type=&quot;text/javascript&quot;&amp;gt;
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    // required: replace example with your forum shortname
+    var disqus_shortname = 'example';
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] ||
+         document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+&amp;lt;/script&amp;gt;
+&amp;lt;noscript&amp;gt;Please enable JavaScript to view the
+&amp;lt;a href=&quot;http://disqus.com/?ref_noscript&quot;
+&amp;gt;comments powered by Disqus.&amp;lt;/a&amp;gt;&amp;lt;/noscript&amp;gt;
+&amp;lt;a href=&quot;http://disqus.com&quot; class=&quot;dsq-brlink&quot;&amp;gt;blog comments powered by
+&amp;lt;span class=&quot;logo-disqus&quot;&amp;gt;Disqus&amp;lt;/span&amp;gt;&amp;lt;/a&amp;gt;
+&lt;/console&gt;
+&lt;p&gt;Once I replaced the &amp;#8216;example&amp;#8217; disqus shortname with the shortname of my site everything worked perfectly. The only thing you&amp;#8217;ll find is that if you have a static blog with jekyll as I do you won&amp;#8217;t be able to see the comments on the static site when you startup jekyll locally with the &amp;#8220;jekyll &amp;#8211;server&amp;#8221; command.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Memoize decorator for python</title>
+   <link href="http://rlgomes.github.com/work/python/2011/12/21/20.00-memoize-decorator-for-python.html"/>
+   <updated>2011-12-21T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/python/2011/12/21/20.00-memoize-decorator-for-python</id>
+   <content type="html">&lt;p&gt;I ran into a situation when writing some code recently where I had to add caching to an existing function in order to speed up the execution of my function when it was called multiple times with the same arguments. I know from experience that this involves a technique called memoization in which you basically cache the previous result and when the same arguments are passed to your function you pull from the cache instead of re-executed the same code that takes a while and would render the exact same result.&lt;/p&gt;
+
+&lt;p&gt;Adding the memoization/caching feature to your function isn&amp;#8217;t hard but immediately I found it made the whole function look ugly and cluttered, and I was not satsified with that. Luckily I was using python which has a feature called decorators which allow you to easily add more &amp;#8220;functionality&amp;#8221; to an existing function without cluttering its &amp;#8220;code space&amp;#8221;.&lt;/p&gt;
+
+&lt;p&gt;As any good engineer the first thing to do was to look around and see if someone had already created a memoize decorator for python and I quickly found there was a decent example in the python documentation but it lacked quite a few features including the ability to handle functions with lists or other objects as arguments. So I set out to create my own memoize module that could be easily used in other projects without having to clutter my code with &amp;#8220;memoization&amp;#8221; code.&lt;/p&gt;
+
+&lt;p&gt;I built the memoize module that is now availabe &lt;a href='https://github.com/rlgomes/memoize'&gt;here&lt;/a&gt; and the README included has enough information on how to use this in your own project.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Optimizing Haskell Programs</title>
+   <link href="http://rlgomes.github.com/work/haskell/2011/11/14/20.30-Optimizing-Haskell-Programs.html"/>
+   <updated>2011-11-14T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/haskell/2011/11/14/20.30-Optimizing-Haskell-Programs</id>
+   <content type="html">&lt;p&gt;Before we start optimizing the &lt;strong&gt;wc&lt;/strong&gt; command line tool we wrote lets first find a simple way to compare this implementation with the wc command tool available on my linux (written in C). I created a file with 197,000 dummy lines (with each line just over 80 characters long) and measured how long it takes to count the number of lines, with each tool:&lt;/p&gt;
+&lt;console&gt;
+time bash -c &quot;cat test | wc -l&quot;
+197000
+bash -c &quot;cat test | wc -l&quot;  0.00s user 0.02s system 65% cpu 0.043 total
+
+time bash -c &quot;cat test | ./wc.hs -l&quot;
+197000
+bash -c &quot;cat test | ./wc.hs -l&quot;  1.46s user 0.07s system 95% cpu 1.590 total
+&lt;/console&gt;
+&lt;p&gt;So the current &lt;strong&gt;Haskell&lt;/strong&gt; implementation is 37x slower than the native C version. The first thing to note is how running the haskell program without compiling is not efficient at all. So lets put together a simple make file and use &lt;strong&gt;ghci&lt;/strong&gt; to compile the &lt;strong&gt;.hs&lt;/strong&gt; file to a native executable. Here&amp;#8217;s a possible make file:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='makefile'&gt;&lt;span class='nf'&gt;init&lt;/span&gt;&lt;span class='o'&gt;:&lt;/span&gt;
+    mkdir -p build
+    cp *.hs build
+
+&lt;span class='nf'&gt;wc&lt;/span&gt;&lt;span class='o'&gt;:&lt;/span&gt; &lt;span class='m'&gt;wc.hs init&lt;/span&gt;
+    &lt;span class='nb'&gt;cd &lt;/span&gt;build ; ghc --make wc.hs -o wc
+
+&lt;span class='nf'&gt;clean&lt;/span&gt;&lt;span class='o'&gt;:&lt;/span&gt;
+    rm -fr build *.o *.hi
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;So after a simple compilation the results we&amp;#8217;re now getting are:&lt;/p&gt;
+&lt;console&gt;
+time bash -c &quot;cat test | build/wc -l&quot;
+197000
+bash -c &quot;cat test | build/wc -l&quot;  0.96s user 0.04s system 95% cpu 1.049 total
+&lt;/console&gt;
+&lt;p&gt;Which puts at at 24x slower which is already some progress with absolutely no code changes. Now the &lt;strong&gt;ghc&lt;/strong&gt; compiler also allows you to use a few optimizing flags that can help make the output code quicker. Lets use the basie &lt;strong&gt;-O2&lt;/strong&gt; optimization and see how much we can gain. We&amp;#8217;ll actually add the compilation directive to the &lt;strong&gt;.hs&lt;/strong&gt; file with the following line:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='o'&gt;#!&lt;/span&gt; &lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='n'&gt;usr&lt;/span&gt;&lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='n'&gt;bin&lt;/span&gt;&lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='n'&gt;env&lt;/span&gt; &lt;span class='n'&gt;runhaskell&lt;/span&gt;
+&lt;span class='cm'&gt;{-# LANGUAGE DeriveDataTypeable #-}&lt;/span&gt;
+&lt;span class='cm'&gt;{-# OPTIONS_GHC -O2 #-}&lt;/span&gt;
+&lt;span class='o'&gt;...&lt;/span&gt;&lt;span class='n'&gt;_removed&lt;/span&gt; &lt;span class='n'&gt;other&lt;/span&gt; &lt;span class='n'&gt;code&lt;/span&gt; &lt;span class='n'&gt;from&lt;/span&gt; &lt;span class='n'&gt;here&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Now after recompiling, here is the current performance of our tool:&lt;/p&gt;
+&lt;console&gt;
+time bash -c &quot;cat test | build/wc -l&quot;
+197000
+bash -c &quot;cat test | build/wc -l&quot;  0.96s user 0.04s system 95% cpu 1.049 total
+&lt;/console&gt;
+&lt;p&gt;Not much of a boost really and its not a surprise since our program isn&amp;#8217;t very complicated we can&amp;#8217;t expect the compiler to be able to save time that easily. There are a few things to look at before we start profiling and here&amp;#8217;s a list of the usual suspects when it comes to bad performance in &lt;strong&gt;Haskell&lt;/strong&gt;:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;String&lt;/strong&gt; is painfully slow and is known for being 20x slower than a similar C implementation. The fix is to use the &lt;strong&gt;ByteString&lt;/strong&gt; type which is known to only be 2x slower than a similar C implementation.&lt;/p&gt;
+&lt;/li&gt;
+
+&lt;li&gt;
+&lt;p&gt;read and show are known to also perform badly and you should use the same functions that manipulate the &lt;strong&gt;ByteString&lt;/strong&gt; datatype.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;So lets start by importing the required library to use the &lt;strong&gt;ByteString&lt;/strong&gt; datatype and using all of the functions that handle &lt;strong&gt;ByteString&lt;/strong&gt;. Be aware that it can be a bit of hassle to get your functions working with the &lt;strong&gt;ByteString&lt;/strong&gt; data type and quite a bit of work to get all the types lined up just write, but here&amp;#8217;s what the &lt;strong&gt;wc&lt;/strong&gt; command implementation looks like that now uses &lt;strong&gt;ByteString&lt;/strong&gt;s:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='o'&gt;#!&lt;/span&gt; &lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='n'&gt;usr&lt;/span&gt;&lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='n'&gt;bin&lt;/span&gt;&lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='n'&gt;env&lt;/span&gt; &lt;span class='n'&gt;runhaskell&lt;/span&gt;
+&lt;span class='cm'&gt;{-# LANGUAGE DeriveDataTypeable #-}&lt;/span&gt;
+&lt;span class='cm'&gt;{-# OPTIONS_GHC -O2 #-}&lt;/span&gt;
+
+&lt;span class='kr'&gt;module&lt;/span&gt; &lt;span class='nn'&gt;Main&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='nf'&gt;main&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kr'&gt;where&lt;/span&gt;
+
+&lt;span class='kr'&gt;import&lt;/span&gt; &lt;span class='nn'&gt;System....&lt;/span&gt;
+&lt;span class='kr'&gt;import&lt;/span&gt; &lt;span class='nn'&gt;Control.Arrow&lt;/span&gt;
+&lt;span class='kr'&gt;import&lt;/span&gt; &lt;span class='k'&gt;qualified&lt;/span&gt; &lt;span class='nn'&gt;Data.ByteString.Char8&lt;/span&gt; &lt;span class='k'&gt;as&lt;/span&gt; &lt;span class='n'&gt;C&lt;/span&gt;
+
+&lt;span class='kr'&gt;data&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt; &lt;span class='p'&gt;{&lt;/span&gt;&lt;span class='n'&gt;chars&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;Bool&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='n'&gt;lines_&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;Bool&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='n'&gt;words_&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;Bool&lt;/span&gt;&lt;span class='p'&gt;}&lt;/span&gt;
+    &lt;span class='kr'&gt;deriving&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Show&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='kt'&gt;Data&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='kt'&gt;Typeable&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='nf'&gt;wc&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt; &lt;span class='p'&gt;{&lt;/span&gt; &lt;span class='n'&gt;chars&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;def&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;name&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;m&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;help&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;print the byte counts&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;
+          &lt;span class='n'&gt;lines_&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;def&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;help&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;print the character counts&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;
+          &lt;span class='n'&gt;words_&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;def&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;help&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;print the word counts&amp;quot;&lt;/span&gt; &lt;span class='p'&gt;}&lt;/span&gt;
+        &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;help&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;Print newline, word, and byte counts for each FILE, &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                 &lt;span class='s'&gt;&amp;quot;and a total line if more than one FILE is specified.&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                 &lt;span class='s'&gt;&amp;quot; With no FILE, or when FILE is -, read standard &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                 &lt;span class='s'&gt;&amp;quot;input.  A word is a non-zero-length sequence of &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                 &lt;span class='s'&gt;&amp;quot;characters delimited by white space.&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+        &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;summary&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;wc v0.0.1, (C) Rodney Gomes&amp;quot;&lt;/span&gt;
+
+&lt;span class='nf'&gt;countwords&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;pack&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;length&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;words&lt;/span&gt;
+&lt;span class='nf'&gt;countlines&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;pack&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;length&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;lines&lt;/span&gt;
+&lt;span class='nf'&gt;countchars&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;pack&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;length&lt;/span&gt;
+
+&lt;span class='nf'&gt;space&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;pack&lt;/span&gt; &lt;span class='s'&gt;&amp;quot; &amp;quot;&lt;/span&gt;
+&lt;span class='nf'&gt;flat&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;,(&lt;/span&gt;&lt;span class='n'&gt;b&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;c&lt;/span&gt;&lt;span class='p'&gt;))&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;concat&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='kt'&gt;:&lt;/span&gt; &lt;span class='n'&gt;space&lt;/span&gt; &lt;span class='kt'&gt;:&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt; &lt;span class='kt'&gt;:&lt;/span&gt; &lt;span class='n'&gt;space&lt;/span&gt; &lt;span class='kt'&gt;:&lt;/span&gt; &lt;span class='n'&gt;c&lt;/span&gt; &lt;span class='kt'&gt;:&lt;/span&gt; &lt;span class='kt'&gt;[]&lt;/span&gt; &lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='nf'&gt;addnl&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;concat&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='kt'&gt;:&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;pack&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;&lt;/span&gt;&lt;span class='se'&gt;\n&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kt'&gt;:&lt;/span&gt; &lt;span class='kt'&gt;[]&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;span class='nf'&gt;optionHandler&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt;&lt;span class='p'&gt;{&lt;/span&gt;&lt;span class='n'&gt;chars&lt;/span&gt;&lt;span class='ow'&gt;=&lt;/span&gt;&lt;span class='kt'&gt;True&lt;/span&gt;&lt;span class='p'&gt;}&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;addnl&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;countchars&lt;/span&gt;
+&lt;span class='nf'&gt;optionHandler&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt;&lt;span class='p'&gt;{&lt;/span&gt;&lt;span class='n'&gt;lines_&lt;/span&gt;&lt;span class='ow'&gt;=&lt;/span&gt;&lt;span class='kt'&gt;True&lt;/span&gt;&lt;span class='p'&gt;}&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;addnl&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;countlines&lt;/span&gt;
+&lt;span class='nf'&gt;optionHandler&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt;&lt;span class='p'&gt;{&lt;/span&gt;&lt;span class='n'&gt;words_&lt;/span&gt;&lt;span class='ow'&gt;=&lt;/span&gt;&lt;span class='kt'&gt;True&lt;/span&gt;&lt;span class='p'&gt;}&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;addnl&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;countwords&lt;/span&gt;
+&lt;span class='nf'&gt;optionHandler&lt;/span&gt; &lt;span class='kr'&gt;_&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;addnl&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;flat&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt; &lt;span class='n'&gt;countlines&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class='n'&gt;countwords&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class='n'&gt;countchars&lt;/span&gt; &lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='nf'&gt;main&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;cmdArgs&lt;/span&gt; &lt;span class='n'&gt;wc&lt;/span&gt; &lt;span class='o'&gt;&amp;gt;&amp;gt;=&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;interact&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;optionHandler&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Just a few tweaks really in terms of the functions being used and how to handle the new &lt;strong&gt;ByteString&lt;/strong&gt; datatype. I also realized that the tool wasn&amp;#8217;t outputting a necessary newline at the end of the output so I added that. After this small change surprisingly enough we&amp;#8217;re now really close to the C implementation speed:&lt;/p&gt;
+&lt;console&gt;
+time bash -c &quot;cat test | build/wc -l&quot;
+197000
+bash -c &quot;cat test | build/wc -l&quot;  0.02s user 0.04s system 77% cpu 0.073 total
+&lt;/console&gt;
+&lt;p&gt;Now we&amp;#8217;re still 69% slower than the C implementation which means we have room for improvmenet, but the interesting part is we&amp;#8217;re actually 72% faster than the C implementation when we have to calculate the numbe of lines, words and characters at the same time:&lt;/p&gt;
+&lt;console&gt;
+time bash -c &quot;cat test | wc&quot;
+ 197000 3743000 19306000
+bash -c &quot;cat test | wc&quot;  0.57s user 0.02s system 95% cpu 0.613 total
+
+time bash -c &quot;cat test | build/wc&quot;
+197000 3743000 19306000
+bash -c &quot;cat test | build/wc&quot;  0.30s user 0.04s system 94% cpu 0.357 total
+&lt;/console&gt;
+&lt;p&gt;Now we&amp;#8217;ve reached the point where if we want to get our counting of lines to perform as well as the C implementation we&amp;#8217;re going to have to profile our &lt;strong&gt;Haskell&lt;/strong&gt; program. To profile we need to compile with a few additional flags:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='makefile'&gt;&lt;span class='nf'&gt;wc&lt;/span&gt;&lt;span class='o'&gt;:&lt;/span&gt; &lt;span class='m'&gt;wc.hs init&lt;/span&gt;
+    &lt;span class='nb'&gt;cd &lt;/span&gt;build ; ghc -prof -auto-all -rtsopts --make wc.hs -o wc
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;We added the &lt;strong&gt;-prof -auto-all&lt;/strong&gt; to build with profiling enabled, the -auto-all generates cost centres for all top level functions, you can read more about that in the &lt;strong&gt;Haskell&lt;/strong&gt; documentation on profiling. When you try to run the &lt;strong&gt;make wc&lt;/strong&gt; again if you get something like so:&lt;/p&gt;
+&lt;console&gt;
+wc.hs:7:8:
+    Could not find module `System....':
+      Perhaps you haven't installed the profiling libraries for package
+                                                                  `cmdargs-0.9'?
+      Use -v to see a list of the files searched for.
+&lt;/console&gt;
+&lt;p&gt;Just run the cabal install command like so for each package:&lt;/p&gt;
+&lt;console&gt;
+cabal install --reinstall -p cmdargs
+&lt;/console&gt;
+&lt;p&gt;That will reinstall the package and make sure to compile the required profiling information. You can now run the same command like so:&lt;/p&gt;
+&lt;console&gt;
+wc -l +RTS -p -RTS
+&lt;/console&gt;
+&lt;p&gt;You&amp;#8217;l now have a nice &lt;strong&gt;wc.prof&lt;/strong&gt; file to look at which contains information like this in it (slightly reformatted to fit):&lt;/p&gt;
+&lt;console&gt;
+    Mon Nov 14 19:05 2011 Time and Allocation Profiling Report  (Final)
+
+       wc +RTS -p -RTS -l
+
+    total time  =        0.04 secs   (2 ticks @ 20 ms)
+    total alloc =  13,593,584 bytes  (excludes profiling overheads)
+
+COST CENTRE                    MODULE               %time %alloc
+main                           Main                  50.0    1.3
+countlines                     Main                  50.0   98.5
+
+                                                    individual    inherited
+COST CENTRE              MODULE            no. entries %time %alloc %time %alloc
+
+MAIN            MAIN                         1   0    0.0    0.0   100.0   100.0
+ main           Main                       358   3   50.0    1.3   100.0    99.9
+  optionHandler Main                       361   1    0.0    0.0    50.0    98.5
+   addnl        Main                       363   1    0.0    0.0     0.0     0.0
+   countlines   Main                       362   2   50.0   98.5    50.0    98.5
+  wc            Main                       360   0    0.0    0.0     0.0     0.0
+ CAF            Main                       352  33    0.0    0.0     0.0     0.0
+  addnl         Main                       364   0    0.0    0.0     0.0     0.0
+  wc            Main                       359   1    0.0    0.0     0.0     0.0
+ CAF            Data.Typeable              350   5    0.0    0.0     0.0     0.0
+ CAF            GHC.Show                   348   1    0.0    0.0     0.0     0.0
+ CAF            Data.HashTable             290   3    0.0    0.0     0.0     0.0
+ CAF            GHC.IO.Handle.FD           288   3    0.0    0.0     0.0     0.0
+ CAF            GHC.IO.FD                  272   4    0.0    0.0     0.0     0.0
+ CAF            GHC.IO.Handle.Internals    252   1    0.0    0.0     0.0     0.0
+ CAF            GHC.IO.Encoding.Iconv      246   2    0.0    0.0     0.0     0.0
+ CAF            GHC.Conc.Signal            243   1    0.0    0.0     0.0     0.0
+ CAF            Data.Data                  227   3    0.0    0.0     0.0     0.0
+ CAF            System.....Implicit.Global 226   3    0.0    0.0     0.0     0.0
+ CAF            System.....Implicit.Reader 223   1    0.0    0.0     0.0     0.0
+ CAF            Data.Generics.Any.Prelude  222   2    0.0    0.0     0.0     0.0
+ CAF            System.....Explicit        209   6    0.0    0.0     0.0     0.0
+ CAF            System.....Explicit.Type   202   1    0.0    0.0     0.0     0.0
+ CAF            System.....Explicit.Help   189   1    0.0    0.0     0.0     0.0
+ CAF            System.....Implicit.Ann    187   4    0.0    0.0     0.0     0.0
+ CAF            System.....Annotate        186   1    0.0    0.0     0.0     0.0
+ CAF            Data.ByteString.Char8      184   1    0.0    0.0     0.0     0.0
+&lt;/console&gt;
+&lt;p&gt;With the above we can now see that we&amp;#8217;re spending 50% of our time in countlines and the other 50% in the main functio which is most likely in the &lt;strong&gt;interact&lt;/strong&gt; function reading the input and 50% of the time parsing and counting in the &lt;strong&gt;countlines&lt;/strong&gt;. Since we don&amp;#8217;t have access to the &lt;strong&gt;interact&lt;/strong&gt; function what we can do is create &lt;strong&gt;cost centres&lt;/strong&gt; for the &lt;strong&gt;countlines&lt;/strong&gt; function and see if it identifies something we weren&amp;#8217;t expect. So we&amp;#8217;ll add this to our source:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;countwords&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;pack&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;length&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;words&lt;/span&gt;
+&lt;span class='nf'&gt;countlines&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='cm'&gt;{-# SCC &amp;quot;C.pack&amp;quot; #-}&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;pack&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='cm'&gt;{-# SCC &amp;quot;show&amp;quot; #-}&lt;/span&gt; &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='nf'&gt;\&lt;/span&gt;
+             &lt;span class='cm'&gt;{-# SCC &amp;quot;length&amp;quot; #-}&lt;/span&gt; &lt;span class='n'&gt;length&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='cm'&gt;{-# SCC &amp;quot;C.lines&amp;quot; #-}&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;lines&lt;/span&gt;
+&lt;span class='nf'&gt;countchars&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;pack&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='kt'&gt;C&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;length&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;So when we recompile and run with the above &lt;strong&gt;cost centres&lt;/strong&gt; we can then get more detail from profiling:&lt;/p&gt;
+&lt;console&gt;
+COST CENTRE  MODULE        no.    entries  %time %alloc   %time %alloc$
+$
+MAIN         MAIN            1           0  75.0    0.5   100.0  100.0$
+ C.pack      Main          358           1   0.0    0.0    25.0   99.4$
+  show       Main          359           1   0.0    0.0    25.0   99.4$
+   length    Main          360           1   0.0    0.0    25.0   99.4$
+    C.lines  Main          361           1  25.0   99.4    25.0   99.4$
+&lt;/console&gt;
+&lt;p&gt;We can see that we&amp;#8217;re spending about 25% of our time each of the places we set those &lt;strong&gt;cost centres&lt;/strong&gt;. The thing to do now is try to understand why it takes 25% of the time to do the pack call or the show call when they&amp;#8217;re just converting an &lt;strong&gt;Int&lt;/strong&gt; to &lt;strong&gt;String&lt;/strong&gt; and then to a &lt;strong&gt;ByteString&lt;/strong&gt;. I just wanted to show how to profile an existing tool and that &lt;strong&gt;Haskell&lt;/strong&gt; can in fact be as quick as &lt;strong&gt;C&lt;/strong&gt; without having to any major changes and using the right types.&lt;/p&gt;
+
+&lt;p&gt;So we&amp;#8217;ve pretty much optimized our &lt;strong&gt;wc&lt;/strong&gt; implementation and the only thing left to do is a detailed comparison of the performance of our implementation vs the C implementation:&lt;/p&gt;
+
+&lt;p&gt;Counting lines in a file with 500,000 lines where all lines have 80 columns:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Ref Implementation: 0.084s&lt;/li&gt;
+
+&lt;li&gt;Our Implementation: 0.149s&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Counting words in a file with 500,000 lines where all lines have 80 columns:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Ref Implementation: 1.243s&lt;/li&gt;
+
+&lt;li&gt;Our Implementation: 0.742s&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Counting chars in a file with 500,000 lines where all lines have 80 columns:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Ref Implementation: 1.224s&lt;/li&gt;
+
+&lt;li&gt;Our Implementation: 0.116s&lt;/li&gt;
+&lt;/ul&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Writing wc command line tool in Haskell</title>
+   <link href="http://rlgomes.github.com/work/haskell/2011/11/13/13.00-Writing-wc-command-line-tool-in-Haskell.html"/>
+   <updated>2011-11-13T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/haskell/2011/11/13/13.00-Writing-wc-command-line-tool-in-Haskell</id>
+   <content type="html">&lt;p&gt;Now after having gotten a pretty good overview of how to use Haskell&amp;#8217;s most important features we can now use this newly learned skills to write a clone of the &amp;#8216;wc&amp;#8217; command line tool completely in Haskell and compare this to what the current code for the wc command line tool is written in.&lt;/p&gt;
+
+&lt;p&gt;The &amp;#8216;wc&amp;#8217; command has the following help menu on my linux box:&lt;/p&gt;
+&lt;console&gt;
+$ wc --help
+Usage: wc [OPTION]... [FILE]...
+  or:  wc [OPTION]... --files0-from=F
+Print newline, word, and byte counts for each FILE, and a total line if
+more than one FILE is specified.  With no FILE, or when FILE is -,
+read standard input.  A word is a non-zero-length sequence of characters
+delimited by white space.
+  -c, --bytes            print the byte counts
+  -m, --chars            print the character counts
+  -l, --lines            print the newline counts
+      --files0-from=F    read input from the files specified by
+                           NUL-terminated names in file F;
+                           If F is - then read names from standard input
+  -L, --max-line-length  print the length of the longest line
+  -w, --words            print the word counts
+      --help     display this help and exit
+      --version  output version information and exit
+
+Report wc bugs to bug-coreutils@gnu.org
+GNU coreutils home page: http://www.gnu.org/software/coreutils/
+General help using GNU software: http://www.gnu.org/gethelp/
+For complete documentation, run: info coreutils 'wc invocation'
+&lt;/console&gt;
+&lt;p&gt;So we&amp;#8217;re going to try and implement the counting of characters, lines and words and also make sure that we can handle piping of a file to the stdin with our newly created command line tool.&lt;/p&gt;
+
+&lt;p&gt;First thing that is required to write a command line tool is a command line parsing library. I choose CmdArgs since I found it worked really well and allowed you to easily define the help menu and and summary quite nicely. You can read up on this library &lt;a href='http://community.haskell.org/~ndm/cmdargs/'&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The &lt;strong&gt;CmdArgs&lt;/strong&gt; library is really great at expressing what arguments are available and what each of them do. You have to firstly define the datatype that identifies the various arguments and their types, like so:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='kr'&gt;data&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt; &lt;span class='p'&gt;{&lt;/span&gt;&lt;span class='n'&gt;chars&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;Bool&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='n'&gt;lines_&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;Bool&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='n'&gt;words_&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;Bool&lt;/span&gt;&lt;span class='p'&gt;}&lt;/span&gt;
+    &lt;span class='kr'&gt;deriving&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Show&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='kt'&gt;Data&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='kt'&gt;Typeable&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;&lt;span class='o'&gt;$&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;So the above just defines that we have 3 flags that can be used and each of them are either present or not (ie Bool type). The underscore following the name is used whenever you have a namespace collision such as the fact that &lt;strong&gt;lines&lt;/strong&gt; and &lt;strong&gt;words&lt;/strong&gt; are both functions that already existing in &lt;strong&gt;Haskell&lt;/strong&gt;. CmdArgs will automatically strip the underscore when parsing the command line.&lt;/p&gt;
+
+&lt;p&gt;We now have to instantiate our WC data type and fill in the required information on what each option does as well as give some additional information on what the tool does and how to use it. Here is how this is done in &lt;strong&gt;Haskell&lt;/strong&gt; when using &lt;strong&gt;CmdArgs&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;wc&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt; &lt;span class='p'&gt;{&lt;/span&gt; &lt;span class='n'&gt;chars&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;def&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;name&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;m&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;help&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;print the byte counts&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;
+          &lt;span class='n'&gt;lines_&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;def&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;help&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;print the character counts&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;
+          &lt;span class='n'&gt;words_&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;def&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;help&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;print the word counts&amp;quot;&lt;/span&gt; &lt;span class='p'&gt;}&lt;/span&gt;
+        &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;help&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;Print newline, word, and byte counts for each FILE, &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                 &lt;span class='s'&gt;&amp;quot;and a total line if more than one FILE is specified.&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                 &lt;span class='s'&gt;&amp;quot; With no FILE, or when FILE is -, read standard &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                 &lt;span class='s'&gt;&amp;quot;input.  A word is a non-zero-length sequence of &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                 &lt;span class='s'&gt;&amp;quot;characters delimited by white space.&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+        &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;summary&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;wc v0.0.1, (C) Rodney Gomes&amp;quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;The above is using the &lt;strong&gt;&amp;amp;=&lt;/strong&gt; operator is used to annotation the chars type with additional information such as the name of the option and the help to show when displaying this option. The whole &lt;strong&gt;WC&lt;/strong&gt; datatype is annotated with the &lt;strong&gt;help&lt;/strong&gt; and &lt;strong&gt;summary&lt;/strong&gt; which are then used to generate the help menu like so:&lt;/p&gt;
+&lt;console&gt;
+wc v0.0.1, (C) Rodney Gomes
+
+wc [OPTIONS]
+  Print newline, word, and byte counts for each FILE, and a total line if more
+  than one FILE is specified. With no FILE, or when FILE is -, read standard
+  input.  A word is a non-zero-length sequence of characters delimited by white
+  space.
+
+Common flags:
+  -m --chars    print the byte counts
+  -l --lines    print the character counts
+  -w --words    print the word counts
+  -? --help     Display help message
+  -V --version  Print version information
+&lt;/console&gt;
+&lt;p&gt;There you have your argument parsing and menu printing all in less than 15 lines of &lt;strong&gt;Haskell&lt;/strong&gt;. The next bit we&amp;#8217;re going to focus on is how do we actually count lines, words and characters using &lt;strong&gt;Haskell&lt;/strong&gt;. Instead of writing functions that can calculate the number of lines/words in a &lt;strong&gt;String&lt;/strong&gt; we can easily look through the &lt;strong&gt;Prelude&lt;/strong&gt; module and find that there are two functions that do the trick: &lt;strong&gt;lines&lt;/strong&gt; and &lt;strong&gt;words&lt;/strong&gt; and using the already familiar function composition we can write:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;countlines&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;length&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;lines&lt;/span&gt;
+&lt;span class='nf'&gt;countwords&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;length&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;words&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Now creating a main function in Haskell requires you understand a few things about the way &lt;strong&gt;IO&lt;/strong&gt; is handled. In &lt;strong&gt;Haskell&lt;/strong&gt; as mentioned early in my posts is a purely functional language and for things such as &lt;strong&gt;IO&lt;/strong&gt; which are basically side effects within your function &lt;strong&gt;Haskell&lt;/strong&gt;. This side-effect is handled by expressing side effects as a &lt;strong&gt;Monad&lt;/strong&gt;. Now I won&amp;#8217;t go into all of the details of a &lt;strong&gt;Monad&lt;/strong&gt; in this post and I suggest you read up on Monads with these few links:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href='http://mvanier.livejournal.com/3917.html'&gt;Yet Another Monad Tutorial&lt;/a&gt; is a great source of informatoin but its very detailed and runs over the course of a few posts&lt;/p&gt;
+&lt;/li&gt;
+
+&lt;li&gt;
+&lt;p&gt;&lt;a href='http://homepages.inf.ed.ac.uk/wadler/papers/marktoberdorf/baastad.pdf'&gt;Monads for functional programming&lt;/a&gt; the original &lt;strong&gt;Monad&lt;/strong&gt; paper that expresses how to use &lt;strong&gt;Monads&lt;/strong&gt; within a functional language so you can do impure actions within a pure function.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The quick and dirty introduction to &lt;strong&gt;Monads&lt;/strong&gt; is tha they&amp;#8217;re used to do a few things that we take for granted in other imperative languages, such as: exceptions, state, output. In the case of the &lt;strong&gt;main&lt;/strong&gt; function has an &lt;strong&gt;IO ()&lt;/strong&gt; which just means that this function generates output and returns the unit type &lt;strong&gt;()&lt;/strong&gt; which I usually view as &lt;strong&gt;void&lt;/strong&gt; in Haskell. Lets look at a simple program that prints &amp;#8216;Hello World&amp;#8217;:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;main&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;putStrLn&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;Hello World&amp;quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;The function &lt;strong&gt;putStrLn&lt;/strong&gt; of course has a type of&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;putStrLn&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;String&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;IO&lt;/span&gt; &lt;span class='nb'&gt;()&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;The other thing to introduce is the &lt;strong&gt;do&lt;/strong&gt; notation which is heavily used along side &lt;strong&gt;Monads&lt;/strong&gt; because it better expresses the imperative sense of the Monadic actions. Its not the only way to express monadic actions but seems to be the easiest to start with for developers coming from the imperative world. I would read up on the other available options when trying to chain monadic actions becuase you&amp;#8217;ll find that &lt;strong&gt;Haskell&lt;/strong&gt; has very elegant ways of handling this. The notation itself allows you to execute separate statements that are not necessarily used when generating the output of your function. For example:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;main&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kr'&gt;do&lt;/span&gt;
+         &lt;span class='n'&gt;putStrLn&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;Input name:&amp;quot;&lt;/span&gt;
+         &lt;span class='n'&gt;name&lt;/span&gt; &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='n'&gt;getLine&lt;/span&gt;
+         &lt;span class='n'&gt;putStrLn&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;Hi there &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='n'&gt;name&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;There you can see some Haskell code that looks extremely like an imperative program. Now you don&amp;#8217;t have to write things like that and can in fact be more functional when writing code in &lt;strong&gt;Haskell&lt;/strong&gt; and do the same like so:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;main&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;putStrLn&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;Input name:&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;getLine&lt;/span&gt; &lt;span class='o'&gt;&amp;gt;&amp;gt;=&lt;/span&gt; &lt;span class='n'&gt;putStrLn&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;++&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;Hello there &amp;quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;There are a few new functions being used here which you may already know if read the tutorials on &lt;strong&gt;Monads&lt;/strong&gt; I previously mentioned but they&amp;#8217;re not hard to understand the first is &lt;strong&gt;&amp;#187;&lt;/strong&gt; which has the signature:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;&amp;gt;&amp;gt;&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Monad&lt;/span&gt; &lt;span class='n'&gt;m&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;m&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;m&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;m&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;What it does is simply accept two monadic actoins and only return the second, basically ignore the return from the first function. This was necessary since we wanted to print the &amp;#8220;Input name:&amp;#8221; string but didn&amp;#8217;t care for its return. The &lt;strong&gt;&amp;#187;=&lt;/strong&gt; function on the other hand is the function composition function for Monadic functions. Its signature is more familiar:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;&amp;gt;&amp;gt;=&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Monad&lt;/span&gt; &lt;span class='n'&gt;m&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;m&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;m&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;m&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;You can easily see what the function does and its purpose with in &lt;strong&gt;Haskell&lt;/strong&gt;. Then the only other magic done in that one line was to infix the &lt;strong&gt;++&lt;/strong&gt; operator and use it to concatenate the return of the &lt;strong&gt;getLine&lt;/strong&gt; with the &amp;#8220;Hello there &amp;#8221; string. I really prefer not using the &lt;strong&gt;do&lt;/strong&gt; notation when possible just because its not as functionally elegant as other available options. I think its a matter of taste and you&amp;#8217;ll find what makes more sense to use in different situations.&lt;/p&gt;
+
+&lt;p&gt;So the only thing missing is the ability to handle the input from the standard input from our program in our program. In the &lt;strong&gt;Prelude&lt;/strong&gt; there is a function that allows us to handle the stdin and output directly to the stdout. This is the &lt;strong&gt;interact&lt;/strong&gt; function:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;interact&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;String&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;String&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;IO&lt;/span&gt; &lt;span class='nb'&gt;()&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;This function will take your &lt;strong&gt;String-&amp;gt;String&lt;/strong&gt; function and do the required &lt;strong&gt;IO ()&lt;/strong&gt; output. The input to your function is the whole of the standard input and what you&amp;#8217;ll be returning is the whole of what you want to be printed on the screen (ie standard output). So you can basically apply the &lt;strong&gt;countlines&lt;/strong&gt; function like so:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='kr'&gt;module&lt;/span&gt; &lt;span class='nn'&gt;Main&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='nf'&gt;main&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kr'&gt;where&lt;/span&gt;
+
+&lt;span class='nf'&gt;countlines&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;length&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;lines&lt;/span&gt;
+&lt;span class='nf'&gt;main&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;interact&lt;/span&gt; &lt;span class='n'&gt;countlines&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;I just introduced the module declaration line to also show how to correctly define your module and tell the ghci compilere which function is your main entry point. We had to use the &lt;strong&gt;show&lt;/strong&gt; function to convert the number calculated by our countlines function back into a &lt;strong&gt;String&lt;/strong&gt;. With the above you should be able to run commands such as:&lt;/p&gt;
+&lt;console&gt;
+$ cat test.hs | runhaskell test.hs
+5
+&lt;/console&gt;
+&lt;p&gt;With all that we&amp;#8217;ve gone over at this point you should be able to write up the &lt;strong&gt;wc&lt;/strong&gt; command line tool and it may look something like this:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='o'&gt;#!&lt;/span&gt; &lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='n'&gt;usr&lt;/span&gt;&lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='n'&gt;bin&lt;/span&gt;&lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='n'&gt;env&lt;/span&gt; &lt;span class='n'&gt;runhaskell&lt;/span&gt;
+&lt;span class='cm'&gt;{-# LANGUAGE DeriveDataTypeable #-}&lt;/span&gt;
+
+&lt;span class='kr'&gt;module&lt;/span&gt; &lt;span class='nn'&gt;Main&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='nf'&gt;main&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kr'&gt;where&lt;/span&gt;
+
+&lt;span class='kr'&gt;import&lt;/span&gt; &lt;span class='nn'&gt;System.Console.CmdArgs&lt;/span&gt;
+&lt;span class='kr'&gt;import&lt;/span&gt; &lt;span class='nn'&gt;Control.Arrow&lt;/span&gt;
+
+&lt;span class='kr'&gt;data&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt; &lt;span class='p'&gt;{&lt;/span&gt;&lt;span class='n'&gt;chars&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;Bool&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='n'&gt;lines_&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;Bool&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='n'&gt;words_&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;Bool&lt;/span&gt;&lt;span class='p'&gt;}&lt;/span&gt;
+    &lt;span class='kr'&gt;deriving&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Show&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='kt'&gt;Data&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='kt'&gt;Typeable&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='nf'&gt;wc&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt; &lt;span class='p'&gt;{&lt;/span&gt; &lt;span class='n'&gt;chars&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;def&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;name&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;m&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;help&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;print the byte counts&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;
+          &lt;span class='n'&gt;lines_&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;def&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;help&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;print the character counts&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;
+          &lt;span class='n'&gt;words_&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;def&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;help&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;print the word counts&amp;quot;&lt;/span&gt; &lt;span class='p'&gt;}&lt;/span&gt;
+        &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;help&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;Print newline, word, and byte counts for each FILE, &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                 &lt;span class='s'&gt;&amp;quot;and a total line if more than one FILE is specified.&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                 &lt;span class='s'&gt;&amp;quot; With no FILE, or when FILE is -, read standard &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                 &lt;span class='s'&gt;&amp;quot;input.  A word is a non-zero-length sequence of &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                 &lt;span class='s'&gt;&amp;quot;characters delimited by white space.&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+        &lt;span class='o'&gt;&amp;amp;=&lt;/span&gt; &lt;span class='n'&gt;summary&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;wc v0.0.1, (C) Rodney Gomes&amp;quot;&lt;/span&gt;
+
+&lt;span class='nf'&gt;countwords&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;length&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;words&lt;/span&gt;
+&lt;span class='nf'&gt;countlines&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;length&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;lines&lt;/span&gt;
+&lt;span class='nf'&gt;countchars&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;length&lt;/span&gt;
+
+&lt;span class='nf'&gt;flat&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;,(&lt;/span&gt;&lt;span class='n'&gt;b&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;c&lt;/span&gt;&lt;span class='p'&gt;))&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='s'&gt;&amp;quot; &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='s'&gt;&amp;quot; &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;  &lt;span class='n'&gt;b&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='s'&gt;&amp;quot; &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='n'&gt;c&lt;/span&gt;
+
+&lt;span class='nf'&gt;optionHandler&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt;&lt;span class='p'&gt;{&lt;/span&gt;&lt;span class='n'&gt;chars&lt;/span&gt;&lt;span class='ow'&gt;=&lt;/span&gt;&lt;span class='kt'&gt;True&lt;/span&gt;&lt;span class='p'&gt;}&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;countchars&lt;/span&gt;
+&lt;span class='nf'&gt;optionHandler&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt;&lt;span class='p'&gt;{&lt;/span&gt;&lt;span class='n'&gt;lines_&lt;/span&gt;&lt;span class='ow'&gt;=&lt;/span&gt;&lt;span class='kt'&gt;True&lt;/span&gt;&lt;span class='p'&gt;}&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;countlines&lt;/span&gt;
+&lt;span class='nf'&gt;optionHandler&lt;/span&gt; &lt;span class='kt'&gt;WC&lt;/span&gt;&lt;span class='p'&gt;{&lt;/span&gt;&lt;span class='n'&gt;words_&lt;/span&gt;&lt;span class='ow'&gt;=&lt;/span&gt;&lt;span class='kt'&gt;True&lt;/span&gt;&lt;span class='p'&gt;}&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;countwords&lt;/span&gt;
+&lt;span class='nf'&gt;optionHandler&lt;/span&gt; &lt;span class='kr'&gt;_&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;flat&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt; &lt;span class='n'&gt;countlines&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class='n'&gt;countwords&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class='n'&gt;countchars&lt;/span&gt; &lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='nf'&gt;main&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;cmdArgs&lt;/span&gt; &lt;span class='n'&gt;wc&lt;/span&gt; &lt;span class='o'&gt;&amp;gt;&amp;gt;=&lt;/span&gt; &lt;span class='n'&gt;interact&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;optionHandler&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;That is a our implementation of the &lt;strong&gt;wc&lt;/strong&gt; command line tool (minus the counting of bytes and some of the extended options). There are a few more things introduced in this implementation tht weren&amp;#8217;t covered before such as:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&amp;amp;&amp;amp;&amp;amp;&lt;/strong&gt; operator, also called the &amp;#8216;fanout&amp;#8217; operator which has the following signature &lt;strong&gt;&lt;em&gt;(&amp;amp;&amp;amp;&amp;amp;) :: a b c -&amp;gt; a b c&amp;#8217; -&amp;gt; a b (c, c&amp;#8217;)&lt;/em&gt;&lt;/strong&gt; is basically used to apply the two functions to the same arguemnt and return the result which consists of the tuples of the results of those two functions. We then created a &lt;strong&gt;flat&lt;/strong&gt; function to flatten out the result of applying using the &lt;strong&gt;&amp;amp;&amp;amp;&amp;amp;&lt;/strong&gt; operator.&lt;/p&gt;
+&lt;/li&gt;
+
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;records pattern matching&lt;/strong&gt; - we had introduced the records notation which allows you to basically allows you to define the chars,lines_ and words_ functions which can be used against the &lt;strong&gt;WC&lt;/strong&gt; datatype. Now when pattern matching you can use the same function to match the exact element you&amp;#8217;re looking for and thats what we&amp;#8217;ve done above in the &lt;strong&gt;optionHandler&lt;/strong&gt; function.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The most astounding thing about the above piece of code is how many lines we&amp;#8217;ve actually had to write. The above code is exactly 34 lines of code (in its current incarnation) and the source for the current C implementation of the &lt;strong&gt;wc&lt;/strong&gt; command line tool in the source of my current &lt;strong&gt;Ubuntu Oneiric&lt;/strong&gt; installation is over 700 lines of code.&lt;/p&gt;
+
+&lt;p&gt;Of course lines of code is not a true way to compare software quality between different languages, but it is a measure of complexity. The biggest difference here is how easy it is to read this code vs reading the same program written in C. Just looking at the code above you can see how easy it is to add more functionality and also how easy it is to read the program.&lt;/p&gt;
+
+&lt;p&gt;In the next post we&amp;#8217;re going to actualy analyze the performance of the &lt;strong&gt;wc&lt;/strong&gt; command we wrote and see how close we can get to the performance of the C implementation of the wc command.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Advanced Typeclasses</title>
+   <link href="http://rlgomes.github.com/work/haskell/2011/11/08/22.30-Advanced-Typeclasses.html"/>
+   <updated>2011-11-08T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/haskell/2011/11/08/22.30-Advanced-Typeclasses</id>
+   <content type="html">&lt;p&gt;Lets go back a bit to the typeclass topic and analye and understand well a few important typeclasses that allow you to do a few intesting things. We&amp;#8217;ll start with the &lt;strong&gt;Functor&lt;/strong&gt; typeclass, which has the following definition:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='kr'&gt;class&lt;/span&gt; &lt;span class='kt'&gt;Functor&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt; &lt;span class='kr'&gt;where&lt;/span&gt;
+    &lt;span class='n'&gt;fmap&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;We&amp;#8217;ve introduced a new notation in our signature with the &lt;strong&gt;f a&lt;/strong&gt;, in this simple signature we&amp;#8217;re using the a generic type constructor reference instead of a concrete constructor such as &lt;strong&gt;Maybe&lt;/strong&gt; or from our previous post &lt;strong&gt;Tree&lt;/strong&gt;. So when we create an instance of a &lt;strong&gt;Functor f&lt;/strong&gt; we basically letting any function that wants to use the &lt;strong&gt;Functor&lt;/strong&gt; how to apply and reconstruct our type. We can see how to easily implement a &lt;strong&gt;Functor&lt;/strong&gt; instance for lists, like so:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='kr'&gt;instance&lt;/span&gt; &lt;span class='kt'&gt;Functor&lt;/span&gt; &lt;span class='kt'&gt;[]&lt;/span&gt; &lt;span class='kr'&gt;where&lt;/span&gt;
+    &lt;span class='n'&gt;fmap&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;map&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Lets define the instance of &lt;strong&gt;Functor&lt;/strong&gt; for the &lt;strong&gt;Tree&lt;/strong&gt; data type we defined in the previous post:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='kr'&gt;instance&lt;/span&gt; &lt;span class='kt'&gt;Functor&lt;/span&gt; &lt;span class='kt'&gt;Tree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='kr'&gt;where&lt;/span&gt;
+    &lt;span class='n'&gt;fmap&lt;/span&gt; &lt;span class='kr'&gt;_&lt;/span&gt; &lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;Leaf&lt;/span&gt;
+    &lt;span class='n'&gt;fmap&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Node&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='n'&gt;l&lt;/span&gt; &lt;span class='n'&gt;r&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;Node&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;f&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;fmap&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt; &lt;span class='n'&gt;l&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;fmap&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt; &lt;span class='n'&gt;r&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;With the above we can now easily apply higher order functions to our &lt;strong&gt;Tree&lt;/strong&gt; instances like so:&lt;/p&gt;
+&lt;console&gt;
+Main&gt; fmap (+2) sampleTree
+3
+    4
+        .
+        .
+    5
+        6
+            .
+            .
+        .
+&lt;/console&gt;
+&lt;p&gt;This is where I believe you should really start to see the beauty in the way that Haskell works with your data types and being able to easily modify, transform your types. There are a few other classtypes to look at which include &lt;strong&gt;Foldable&lt;/strong&gt;, &lt;strong&gt;Traversable&lt;/strong&gt;, etc.&lt;/p&gt;
+
+&lt;p&gt;We&amp;#8217;re now going to have a look at the &lt;strong&gt;Show&lt;/strong&gt; and &lt;strong&gt;Read&lt;/strong&gt; classtypes. We&amp;#8217;ve already seen the &lt;strong&gt;Show&lt;/strong&gt; classtype but we want to show the complete function here and understand a bit better how this works with the &lt;strong&gt;Read&lt;/strong&gt; classtype. So here&amp;#8217;s the full definition of the Show classtype:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='kr'&gt;class&lt;/span&gt;  &lt;span class='kt'&gt;Show&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;  &lt;span class='kr'&gt;where&lt;/span&gt;
+    &lt;span class='n'&gt;showsPrec&lt;/span&gt;        &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;Int&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;ShowS&lt;/span&gt;
+    &lt;span class='n'&gt;show&lt;/span&gt;       &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;String&lt;/span&gt;
+    &lt;span class='n'&gt;showList&lt;/span&gt;         &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;ShowS&lt;/span&gt;
+
+&lt;span class='c1'&gt;-- Mimimal complete definition:&lt;/span&gt;
+&lt;span class='c1'&gt;-- show or showsPrec&lt;/span&gt;
+    &lt;span class='n'&gt;showsPrec&lt;/span&gt; &lt;span class='kr'&gt;_&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='n'&gt;s&lt;/span&gt;   &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='n'&gt;s&lt;/span&gt;
+
+    &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt;        &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;showsPrec&lt;/span&gt; &lt;span class='mi'&gt;0&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;&amp;quot;&lt;/span&gt;
+
+    &lt;span class='n'&gt;showList&lt;/span&gt; &lt;span class='kt'&gt;[]&lt;/span&gt;       &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;showString&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;[]&amp;quot;&lt;/span&gt;
+    &lt;span class='n'&gt;showList&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='kt'&gt;:&lt;/span&gt;&lt;span class='n'&gt;xs&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;   &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;showChar&lt;/span&gt; &lt;span class='sc'&gt;&amp;#39;[&amp;#39;&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;shows&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;showl&lt;/span&gt; &lt;span class='n'&gt;xs&lt;/span&gt;
+                        &lt;span class='kr'&gt;where&lt;/span&gt; &lt;span class='n'&gt;showl&lt;/span&gt; &lt;span class='kt'&gt;[]&lt;/span&gt;     &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;showChar&lt;/span&gt; &lt;span class='sc'&gt;&amp;#39;]&amp;#39;&lt;/span&gt;
+                              &lt;span class='n'&gt;showl&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='kt'&gt;:&lt;/span&gt;&lt;span class='n'&gt;xs&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;showChar&lt;/span&gt; &lt;span class='sc'&gt;&amp;#39;,&amp;#39;&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;shows&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt;
+                                             &lt;span class='n'&gt;showl&lt;/span&gt; &lt;span class='n'&gt;xs&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;As we did before we only have to implement the &lt;strong&gt;show&lt;/strong&gt; function (don&amp;#8217;t want to get into the &lt;strong&gt;showsPrec&lt;/strong&gt; function at this stage). We&amp;#8217;ll create a new binary tree data type and define a very simple &lt;strong&gt;Show&lt;/strong&gt; instance for this, here&amp;#8217;s what we&amp;#8217;re looking at:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='kr'&gt;data&lt;/span&gt; &lt;span class='kt'&gt;BTree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='kt'&gt;Branch&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;BTree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;BTree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='nf'&gt;showBTree&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Show&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;BTree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;String&lt;/span&gt;
+&lt;span class='nf'&gt;showBTree&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;
+&lt;span class='nf'&gt;showBTree&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Branch&lt;/span&gt; &lt;span class='n'&gt;l&lt;/span&gt; &lt;span class='n'&gt;r&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;(&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='n'&gt;showBTree&lt;/span&gt; &lt;span class='n'&gt;l&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;|&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='n'&gt;showBTree&lt;/span&gt; &lt;span class='n'&gt;r&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;)&amp;quot;&lt;/span&gt;
+
+&lt;span class='kr'&gt;instance&lt;/span&gt; &lt;span class='kt'&gt;Show&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;=&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Show&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;BTree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kr'&gt;where&lt;/span&gt;
+    &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;showBTree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;
+
+&lt;span class='nf'&gt;sampleTree&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;Branch&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Branch&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='mi'&gt;3&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='mi'&gt;2&lt;/span&gt;&lt;span class='p'&gt;))&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='mi'&gt;1&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;So when we do a show of the sampleTree we get the following output:&lt;/p&gt;
+&lt;console&gt;
+((3|2)|1)
+&lt;/console&gt;
+&lt;p&gt;Now we have to read the &lt;strong&gt;Read&lt;/strong&gt; instance so that we can easily parse the expressions of a &lt;strong&gt;BTree&lt;/strong&gt; back into a &lt;strong&gt;BTree&lt;/strong&gt; type that we can then process with the various functions that&amp;#8217;ll we&amp;#8217;ll eventually write. The &lt;strong&gt;Read&lt;/strong&gt; class iself has the following definition:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='kr'&gt;class&lt;/span&gt;  &lt;span class='kt'&gt;Read&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;  &lt;span class='kr'&gt;where&lt;/span&gt;
+    &lt;span class='n'&gt;readsPrec&lt;/span&gt;        &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;Int&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;ReadS&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;
+    &lt;span class='n'&gt;readList&lt;/span&gt;         &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;ReadS&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt;
+
+&lt;span class='c1'&gt;-- Minimal complete definition:&lt;/span&gt;
+&lt;span class='c1'&gt;-- readsPrec&lt;/span&gt;
+    &lt;span class='n'&gt;readList&lt;/span&gt;         &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;readParen&lt;/span&gt; &lt;span class='kt'&gt;False&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='nf'&gt;\&lt;/span&gt;&lt;span class='n'&gt;r&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;pr&lt;/span&gt; &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;[&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;s&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;  &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='n'&gt;lex&lt;/span&gt; &lt;span class='n'&gt;r&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;
+                                                    &lt;span class='n'&gt;pr&lt;/span&gt;       &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='n'&gt;readl&lt;/span&gt; &lt;span class='n'&gt;s&lt;/span&gt;&lt;span class='p'&gt;])&lt;/span&gt;
+                       &lt;span class='kr'&gt;where&lt;/span&gt; &lt;span class='n'&gt;readl&lt;/span&gt;  &lt;span class='n'&gt;s&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='p'&gt;[(&lt;/span&gt;&lt;span class='kt'&gt;[]&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;t&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;   &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;]&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;t&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;  &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='n'&gt;lex&lt;/span&gt; &lt;span class='n'&gt;s&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                                        &lt;span class='p'&gt;[(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='kt'&gt;:&lt;/span&gt;&lt;span class='n'&gt;xs&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;u&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;t&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;    &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='n'&gt;reads&lt;/span&gt; &lt;span class='n'&gt;s&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;
+                                                    &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;xs&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;u&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;   &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='n'&gt;readl&amp;#39;&lt;/span&gt; &lt;span class='n'&gt;t&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt;
+                             &lt;span class='n'&gt;readl&amp;#39;&lt;/span&gt; &lt;span class='n'&gt;s&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='p'&gt;[(&lt;/span&gt;&lt;span class='kt'&gt;[]&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;t&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;   &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;]&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;t&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;  &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='n'&gt;lex&lt;/span&gt; &lt;span class='n'&gt;s&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt;
+                                        &lt;span class='p'&gt;[(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='kt'&gt;:&lt;/span&gt;&lt;span class='n'&gt;xs&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;v&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;,&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;t&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;  &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='n'&gt;lex&lt;/span&gt; &lt;span class='n'&gt;s&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;
+                                                    &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;u&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;    &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='n'&gt;reads&lt;/span&gt; &lt;span class='n'&gt;t&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;
+                                                    &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;xs&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;v&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;   &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='n'&gt;readl&amp;#39;&lt;/span&gt; &lt;span class='n'&gt;u&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;As before we only need to implement the readsPrec function to have a working &lt;strong&gt;Read&lt;/strong&gt; implementation. So lets also have a look at the &lt;strong&gt;ReadS&lt;/strong&gt; type:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='kr'&gt;type&lt;/span&gt; &lt;span class='kt'&gt;ReadS&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;String&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='p'&gt;[(&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='kt'&gt;String&lt;/span&gt;&lt;span class='p'&gt;)]&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;This type defines what a parse does which is to return for parts of the original string with the accompanying converted type. It also allows you to parse whatever is part of your &lt;strong&gt;Read&lt;/strong&gt; implementation and return the rest of the string that wasn&amp;#8217;t parsed.&lt;/p&gt;
+
+&lt;p&gt;Before we implement the &lt;strong&gt;Read&lt;/strong&gt; instance for &lt;strong&gt;BTree&lt;/strong&gt;s lets talk about list comprehension and how to use it. List comprenhension is another feature in Haskell that is implemented quite elegantly. List comprenhension has the following syntax:&lt;/p&gt;
+&lt;console&gt;
+[ expr | qualifier0 , ... , qualifierN ]
+&lt;/console&gt;
+&lt;p&gt;In which the expr defines the way the elements are composed within the list being generated and the qualifiers identify which elements are to be in the resulting list. So lets for example construct a list of all of the odd numbers from 1 to 100:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;odd100&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt; &lt;span class='n'&gt;i&lt;/span&gt; &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='n'&gt;i&lt;/span&gt; &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='mi'&gt;1&lt;/span&gt;&lt;span class='o'&gt;..&lt;/span&gt;&lt;span class='mi'&gt;100&lt;/span&gt;&lt;span class='p'&gt;],&lt;/span&gt; &lt;span class='n'&gt;odd&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;i&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='p'&gt;]&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Now here&amp;#8217;s how we could start putting together out &lt;strong&gt;readTree&lt;/strong&gt; function:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;readsTree&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Read&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;ReadS&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;BTree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;span class='nf'&gt;readsTree&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='sc'&gt;&amp;#39;(&amp;#39;&lt;/span&gt;&lt;span class='kt'&gt;:&lt;/span&gt;&lt;span class='n'&gt;s&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Branch&lt;/span&gt; &lt;span class='n'&gt;l&lt;/span&gt; &lt;span class='n'&gt;r&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='n'&gt;u&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;l&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='sc'&gt;&amp;#39;|&amp;#39;&lt;/span&gt;&lt;span class='kt'&gt;:&lt;/span&gt;&lt;span class='n'&gt;t&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='n'&gt;readsTree&lt;/span&gt; &lt;span class='n'&gt;s&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;
+                                        &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;r&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='sc'&gt;&amp;#39;)&amp;#39;&lt;/span&gt;&lt;span class='kt'&gt;:&lt;/span&gt;&lt;span class='n'&gt;u&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='n'&gt;readsTree&lt;/span&gt; &lt;span class='n'&gt;t&lt;/span&gt; &lt;span class='p'&gt;]&lt;/span&gt;
+&lt;span class='nf'&gt;readsTree&lt;/span&gt; &lt;span class='n'&gt;s&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='p'&gt;[(&lt;/span&gt;&lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='n'&gt;t&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;  &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='n'&gt;t&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;&amp;lt;-&lt;/span&gt; &lt;span class='n'&gt;reads&lt;/span&gt; &lt;span class='n'&gt;s&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt;
+
+&lt;span class='kr'&gt;instance&lt;/span&gt; &lt;span class='kt'&gt;Read&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;=&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Read&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;BTree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kr'&gt;where&lt;/span&gt;
+    &lt;span class='n'&gt;readsPrec&lt;/span&gt; &lt;span class='kr'&gt;_&lt;/span&gt; &lt;span class='n'&gt;s&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;readsBTree&lt;/span&gt; &lt;span class='n'&gt;s&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Now the above function can be a bit to take in all at once but if you have a closer look its really not doing much more than stating that if a string starts with the &lt;strong&gt;&amp;#8217;(&amp;#8217;&lt;/strong&gt; symbol then a &lt;strong&gt;Branch l r&lt;/strong&gt; can be parsed from this string in which the &lt;strong&gt;l&lt;/strong&gt; comes from &lt;strong&gt;readSTree s&lt;/strong&gt; and the returned string must start with the &lt;strong&gt;&amp;#8217;|&amp;#8217;&lt;/strong&gt; and then continues with &lt;strong&gt;t&lt;/strong&gt; which would be parsed to return the &lt;strong&gt;r&lt;/strong&gt; side of the &lt;strong&gt;Branch&lt;/strong&gt; and would leave you with at least the &lt;strong&gt;&amp;#8217;)&amp;#8217;&lt;/strong&gt; symbol followed by the rest of the string (which may be empty). The last pattern of the function assumes everything else would be a &lt;strong&gt;Leaf x&lt;/strong&gt; where is comes from &lt;strong&gt;reads&lt;/strong&gt; of &lt;strong&gt;s&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;This can now be easily be used to parse string back into the &lt;strong&gt;BTree&lt;/strong&gt; type, like so:&lt;/p&gt;
+&lt;console&gt;
+Main&gt; (reads &quot;(1|(2|3))blah&quot;)::[(BTree Int,String)]
+[((1|(2|3)),&quot;blah&quot;)]
+&lt;/console&gt;
+&lt;p&gt;We do have to tell &lt;strong&gt;Haskell&lt;/strong&gt; what the type of the return is because otherwise Haskell can&amp;#8217;t deduce if its a binary tree of integers or a binary tree of strings.&lt;/p&gt;
+
+&lt;p&gt;By now I would hope you&amp;#8217;d be able to write &lt;strong&gt;Read&lt;/strong&gt; and &lt;strong&gt;Show&lt;/strong&gt; instances for any of your own new datatypes and be able to have Haskell really work for you.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Higher order functions in Haskell</title>
+   <link href="http://rlgomes.github.com/work/haskell/2011/11/01/23.00-Higher-order-functions-in-Haskell.html"/>
+   <updated>2011-11-01T00:00:00-07:00</updated>
+   <id>http://rlgomes.github.com/work/haskell/2011/11/01/23.00-Higher-order-functions-in-Haskell</id>
+   <content type="html">&lt;p&gt;From Haskell&amp;#8217;s documentation: &amp;#8220;A higher-order function is a function that takes other functions as arguments or returns a function as result.&amp;#8221;. With this in mind lets start by writing a few functions over lists:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;addone&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt;
+&lt;span class='nf'&gt;addone&lt;/span&gt; &lt;span class='kt'&gt;[]&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;[]&lt;/span&gt;
+&lt;span class='nf'&gt;addone&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='kt'&gt;:&lt;/span&gt;&lt;span class='n'&gt;xs&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='o'&gt;+&lt;/span&gt;&lt;span class='mi'&gt;1&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kt'&gt;:&lt;/span&gt; &lt;span class='n'&gt;addone&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;xs&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='nf'&gt;divlist&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Fractional&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&amp;gt;&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt;
+&lt;span class='nf'&gt;divlist&lt;/span&gt; &lt;span class='kt'&gt;[]&lt;/span&gt; &lt;span class='kr'&gt;_&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;[]&lt;/span&gt;
+&lt;span class='nf'&gt;divlist&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='kt'&gt;:&lt;/span&gt;&lt;span class='n'&gt;xs&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='n'&gt;n&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='o'&gt;/&lt;/span&gt; &lt;span class='n'&gt;n&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kt'&gt;:&lt;/span&gt; &lt;span class='n'&gt;divlist&lt;/span&gt; &lt;span class='n'&gt;xs&lt;/span&gt; &lt;span class='n'&gt;n&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;We could add a few others but the idea here is that we have to write a new function everytime we want to traverse a list of elements and apply a function to these elements while recreating the list in the same order. What we realy need is a function with the following signature:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;applyf&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;b&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;You can see that the function takes a function that transforms &lt;strong&gt;a to b&lt;/strong&gt;&amp;#8217;s and a list of &lt;strong&gt;a&lt;/strong&gt;&amp;#8217;s to create a list of &lt;strong&gt;b&lt;/strong&gt;&amp;#8217;s. We can even define the applyf function quite easily as:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;applyf&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;b&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt;
+&lt;span class='nf'&gt;applyf&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt; &lt;span class='kt'&gt;[]&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;[]&lt;/span&gt;
+&lt;span class='nf'&gt;applyf&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='kt'&gt;:&lt;/span&gt;&lt;span class='n'&gt;xs&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;f&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kt'&gt;:&lt;/span&gt; &lt;span class='n'&gt;applyf&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt; &lt;span class='n'&gt;xs&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;There actually already exists an &lt;strong&gt;applyf&lt;/strong&gt; function called &lt;strong&gt;map&lt;/strong&gt; in the Haskell Prelude library. Lets show how to quickly redefine the &lt;strong&gt;addone&lt;/strong&gt; and &lt;strong&gt;divlist&lt;/strong&gt; function using the &lt;strong&gt;map&lt;/strong&gt; function:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;addone&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;map&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;+&lt;/span&gt;&lt;span class='mi'&gt;1&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;span class='nf'&gt;divlist&lt;/span&gt; &lt;span class='n'&gt;n&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;map&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='n'&gt;n&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;You can quickly see how to use &lt;strong&gt;map&lt;/strong&gt; to basically apply any function to a list of items and get back the list of the results. We can now start to introduce a few other high order functions that are in the Prelude library:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;filter&lt;/strong&gt; - the filter function takes a boolean function as an argument and removes allelements from the input list that do not satisfy the boolean function. This is very useful when you want to quickly filter out elements based on a simple boolean function such as filtering a list of tuples in which the second element is the age and we the list to contain only the teenagers:&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;filterTeens&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;filter&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='nf'&gt;\&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;snd&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='o'&gt;&amp;gt;&lt;/span&gt; &lt;span class='mi'&gt;12&lt;/span&gt; &lt;span class='o'&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class='n'&gt;snd&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='o'&gt;&amp;lt;&lt;/span&gt; &lt;span class='mi'&gt;20&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;foldl&lt;/strong&gt; - reduces a list of elements down to a simple object by applying a function you supplied and a starting value. You can use this to quickly sum up a list of values or even concatenate a list of strings, here are a few examples: &lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;sumlist&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;foldl&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;+&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='mi'&gt;0&lt;/span&gt;
+&lt;span class='nf'&gt;concatlist&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;foldl&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;++&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;&amp;quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;&lt;/p&gt;
+&lt;/li&gt;
+
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;foldr&lt;/strong&gt; - same as foldl but starts the &amp;#8220;folding&amp;#8221; from the end of the list which can have a completely different meaning depending on the folding operation being used.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;There are many other higher order functions that are extremely useful when wanting to apply transformations to lists. These functions can also be generalized to other structures such as the &lt;strong&gt;Tree&lt;/strong&gt; data that we introduced in the previous post. We&amp;#8217;ll leave the creation of a map, filter for &lt;strong&gt;Tree&lt;/strong&gt; as an exercise for those who are interested in testing out their skills.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Custom data types in Haskell</title>
+   <link href="http://rlgomes.github.com/work/haskell/2011/10/31/20.00-Custom-data-types-in-Haskell.html"/>
+   <updated>2011-10-31T00:00:00-07:00</updated>
+   <id>http://rlgomes.github.com/work/haskell/2011/10/31/20.00-Custom-data-types-in-Haskell</id>
+   <content type="html">&lt;p&gt;Hopefully after the first post in this series you can quickly write up simple functions over existing Haskell types and also understand basic polymorphism as well as funciton composition. We&amp;#8217;ll now start digging into creating custom types and how to handle these in our functions. Lets start by creating a Tree type:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='kr'&gt;data&lt;/span&gt; &lt;span class='kt'&gt;Tree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='kt'&gt;Node&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Tree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Tree&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;When defining elements of the type above you can do so in the following manner:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;sampleTree&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;Node&lt;/span&gt; &lt;span class='mi'&gt;2&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Node&lt;/span&gt; &lt;span class='mi'&gt;1&lt;/span&gt; &lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='kt'&gt;Leaf&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Node&lt;/span&gt; &lt;span class='mi'&gt;3&lt;/span&gt; &lt;span class='kt'&gt;Leaf&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Which represents the Tree:&lt;/p&gt;
+&lt;pre&gt;
+      2
+     / \ 
+    /   \
+   1     3
+  / \   / \
+ *   * *   *
+&lt;/pre&gt;
+&lt;p&gt;We now want to write a function that can calculate the maximum depth of a Tree and when we write this function we must not forget to handle all of the cases that compose the data type Tree. Which means handling the Leaf and handling the Node x y z, like so:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;maxdepth&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;Tree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Int&lt;/span&gt;
+&lt;span class='nf'&gt;maxdepth&lt;/span&gt; &lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='mi'&gt;0&lt;/span&gt;
+&lt;span class='nf'&gt;maxdepth&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Node&lt;/span&gt; &lt;span class='kr'&gt;_&lt;/span&gt; &lt;span class='n'&gt;l&lt;/span&gt; &lt;span class='n'&gt;r&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='mi'&gt;1&lt;/span&gt; &lt;span class='o'&gt;+&lt;/span&gt; &lt;span class='n'&gt;max&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;maxdepth&lt;/span&gt; &lt;span class='n'&gt;l&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;maxdepth&lt;/span&gt; &lt;span class='n'&gt;r&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;As you can see pattern matching on your custom data type is extremely easy to read and is just like doing so with any built in type. We introduced the use of the _ variable which is how you handle variables when you don&amp;#8217;t care to use them in your functions calculations. We&amp;#8217;re using the &lt;strong&gt;max&lt;/strong&gt; function from &lt;strong&gt;Prelude&lt;/strong&gt; to handle calculating the maximum of those two possible choices in a &lt;strong&gt;Tree&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;Lets look at how to print an existing tree with in Haskell. So firstly if you try to just show the current &lt;strong&gt;sampleTree&lt;/strong&gt; you&amp;#8217;ll find that ghci shell will actually complain it can&amp;#8217;t show this new element:&lt;/p&gt;
+&lt;console&gt;
+No instance for (Show (Tree Integer))
+    arising from a use of `print'
+Possible fix: add an instance declaration for (Show (Tree Integer))
+In a stmt of an interactive GHCi command: print it
+&lt;/console&gt;
+&lt;p&gt;The above error is basically trying to tell you that Haskell doesn&amp;#8217;t know how to &amp;#8220;show&amp;#8221; the data type you just created. One easy thing to do is to just let Haskell derive a basic representation for your type by adding the following to the declaration of the type:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='kr'&gt;data&lt;/span&gt; &lt;span class='kt'&gt;Tree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='kt'&gt;Node&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Tree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Tree&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+    &lt;span class='kr'&gt;deriving&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Show&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;With that you can now get a simple representation of your data like so:&lt;/p&gt;
+&lt;console&gt;
+Main&gt; sampleTree
+Node 1 (Node 2 Leaf Leaf) (Node 3 (Node 4 Leaf Leaf) Leaf)
+&lt;/console&gt;
+&lt;p&gt;But you can also define exactly how you&amp;#8217;d like to represent your trees. This is done by defining an instance of the class Show for your datatype and then defining the function &lt;strong&gt;show&lt;/strong&gt; for your type, something like so:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;padding&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Num&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;String&lt;/span&gt;
+&lt;span class='nf'&gt;padding&lt;/span&gt; &lt;span class='mi'&gt;0&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;&amp;quot;&lt;/span&gt;
+&lt;span class='nf'&gt;padding&lt;/span&gt; &lt;span class='n'&gt;n&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='s'&gt;&amp;quot; &amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='n'&gt;padding&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;n&lt;/span&gt;&lt;span class='o'&gt;-&lt;/span&gt;&lt;span class='mi'&gt;1&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='nf'&gt;showTree&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Show&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='kt'&gt;Num&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Tree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;String&lt;/span&gt;
+&lt;span class='nf'&gt;showTree&lt;/span&gt; &lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='n'&gt;n&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;padding&lt;/span&gt; &lt;span class='n'&gt;n&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;.&amp;quot;&lt;/span&gt;
+&lt;span class='nf'&gt;showTree&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Node&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='n'&gt;l&lt;/span&gt; &lt;span class='n'&gt;r&lt;/span&gt; &lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='n'&gt;n&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kr'&gt;let&lt;/span&gt; &lt;span class='n'&gt;showl&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;showTree&lt;/span&gt; &lt;span class='n'&gt;l&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;n&lt;/span&gt;&lt;span class='o'&gt;+&lt;/span&gt;&lt;span class='mi'&gt;4&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kr'&gt;in&lt;/span&gt; 
+                           &lt;span class='kr'&gt;let&lt;/span&gt; &lt;span class='n'&gt;showr&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;showTree&lt;/span&gt; &lt;span class='n'&gt;r&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;n&lt;/span&gt;&lt;span class='o'&gt;+&lt;/span&gt;&lt;span class='mi'&gt;4&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kr'&gt;in&lt;/span&gt; 
+                           &lt;span class='kr'&gt;let&lt;/span&gt; &lt;span class='n'&gt;showc&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;padding&lt;/span&gt; &lt;span class='n'&gt;n&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kr'&gt;in&lt;/span&gt;
+                           &lt;span class='n'&gt;showc&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;&lt;/span&gt;&lt;span class='se'&gt;\n&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='n'&gt;showl&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;&lt;/span&gt;&lt;span class='se'&gt;\n&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;++&lt;/span&gt; &lt;span class='n'&gt;showr&lt;/span&gt;
+
+&lt;span class='kr'&gt;instance&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Show&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Show&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Tree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kr'&gt;where&lt;/span&gt;
+    &lt;span class='n'&gt;show&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;showTree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='mi'&gt;0&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;I&amp;#8217;ve introduced here the concept of typeclasses, they are heavily used in conjunction with polymorphism to better describe the type of elements that can be used with the current function. Typeclasses seem like class definitions but they&amp;#8217;re much more powerful in the sense that you are defining an abstract operation that needs to be defined per type that wants to be usable by certain functions. In the code above you&amp;#8217;ll notice how the &lt;strong&gt;padding&lt;/strong&gt; function is expressing that it can accept any &lt;strong&gt;a&lt;/strong&gt; as long as its an implementation of the typeclass &lt;strong&gt;Num&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;Basically you&amp;#8217;re telling Haskell that to &lt;strong&gt;show&lt;/strong&gt; a &lt;strong&gt;Tree a&lt;/strong&gt; type you want Haskell to represent it in the manner a specific manner by giving Haskell the definition of the &lt;strong&gt;show&lt;/strong&gt; function you&amp;#8217;d rather use. Now when we try to reference our &lt;strong&gt;sampleTree&lt;/strong&gt; you&amp;#8217;ll get a more readable representation like so:&lt;/p&gt;
+&lt;console&gt;
+Main&gt; sampleTree
+1
+    2
+        .
+        .
+    3
+        4
+            .
+            .
+        .
+&lt;/console&gt;
+&lt;p&gt;If we wanted we could even extend this &lt;strong&gt;show&lt;/strong&gt; implementation to draw a few ASCII lines and make the tree a bit easier to read. We&amp;#8217;ll leave that as an exercise for the reader.&lt;/p&gt;
+
+&lt;p&gt;Lets find something more interesting function to write and we&amp;#8217;ll start by writing up a &lt;strong&gt;insert&lt;/strong&gt; function takes a Tree and an element and inserts the Tree with the new element inserted while at least making sure that the nodes are in order in the tree so that if we print the tree in order it will print the elements in order&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;insert&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Ord&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Tree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Tree&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;
+&lt;span class='nf'&gt;insert&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;Node&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='kt'&gt;Leaf&lt;/span&gt; &lt;span class='kt'&gt;Leaf&lt;/span&gt;
+&lt;span class='nf'&gt;insert&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Node&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt; &lt;span class='n'&gt;l&lt;/span&gt; &lt;span class='n'&gt;r&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kr'&gt;if&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='o'&gt;&amp;lt;&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt;
+                            &lt;span class='kr'&gt;then&lt;/span&gt; &lt;span class='kt'&gt;Node&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;insert&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='n'&gt;l&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='n'&gt;r&lt;/span&gt;
+                            &lt;span class='kr'&gt;else&lt;/span&gt; &lt;span class='kt'&gt;Node&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt; &lt;span class='n'&gt;l&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;insert&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='n'&gt;r&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Again we used the typeclass Ord which is define as:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='kr'&gt;class&lt;/span&gt;  &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Eq&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Ord&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;  &lt;span class='kr'&gt;where&lt;/span&gt;
+   &lt;span class='n'&gt;compare&lt;/span&gt;              &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Ordering&lt;/span&gt;
+   &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;&amp;lt;&lt;/span&gt;&lt;span class='p'&gt;),&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;&amp;lt;=&lt;/span&gt;&lt;span class='p'&gt;),&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;&amp;gt;=&lt;/span&gt;&lt;span class='p'&gt;),&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;&amp;gt;&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Bool&lt;/span&gt;
+   &lt;span class='n'&gt;max&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='n'&gt;min&lt;/span&gt;             &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;
+
+        &lt;span class='c1'&gt;-- Minimal complete definition:&lt;/span&gt;
+        &lt;span class='c1'&gt;--      (&amp;lt;=) or compare&lt;/span&gt;
+        &lt;span class='c1'&gt;-- Using compare can be more efficient for complex types.&lt;/span&gt;
+    &lt;span class='n'&gt;compare&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='n'&gt;y&lt;/span&gt;
+         &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='o'&gt;==&lt;/span&gt; &lt;span class='n'&gt;y&lt;/span&gt;    &lt;span class='ow'&gt;=&lt;/span&gt;  &lt;span class='kt'&gt;EQ&lt;/span&gt;
+         &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='o'&gt;&amp;lt;=&lt;/span&gt; &lt;span class='n'&gt;y&lt;/span&gt;    &lt;span class='ow'&gt;=&lt;/span&gt;  &lt;span class='kt'&gt;LT&lt;/span&gt;
+         &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='n'&gt;otherwise&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt;  &lt;span class='kt'&gt;GT&lt;/span&gt;
+
+    &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='o'&gt;&amp;lt;=&lt;/span&gt; &lt;span class='n'&gt;y&lt;/span&gt;           &lt;span class='ow'&gt;=&lt;/span&gt;  &lt;span class='n'&gt;compare&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='n'&gt;y&lt;/span&gt; &lt;span class='o'&gt;/=&lt;/span&gt; &lt;span class='kt'&gt;GT&lt;/span&gt;
+    &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='o'&gt;&amp;lt;&lt;/span&gt;  &lt;span class='n'&gt;y&lt;/span&gt;           &lt;span class='ow'&gt;=&lt;/span&gt;  &lt;span class='n'&gt;compare&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='n'&gt;y&lt;/span&gt; &lt;span class='o'&gt;==&lt;/span&gt; &lt;span class='kt'&gt;LT&lt;/span&gt;
+    &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='o'&gt;&amp;gt;=&lt;/span&gt; &lt;span class='n'&gt;y&lt;/span&gt;           &lt;span class='ow'&gt;=&lt;/span&gt;  &lt;span class='n'&gt;compare&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='n'&gt;y&lt;/span&gt; &lt;span class='o'&gt;/=&lt;/span&gt; &lt;span class='kt'&gt;LT&lt;/span&gt;
+    &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='o'&gt;&amp;gt;&lt;/span&gt;  &lt;span class='n'&gt;y&lt;/span&gt;           &lt;span class='ow'&gt;=&lt;/span&gt;  &lt;span class='n'&gt;compare&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='n'&gt;y&lt;/span&gt; &lt;span class='o'&gt;==&lt;/span&gt; &lt;span class='kt'&gt;GT&lt;/span&gt;
+
+&lt;span class='c1'&gt;-- note that (min x y, max x y) = (x,y) or (y,x)&lt;/span&gt;
+    &lt;span class='n'&gt;max&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='n'&gt;y&lt;/span&gt; 
+         &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='o'&gt;&amp;gt;=&lt;/span&gt; &lt;span class='n'&gt;y&lt;/span&gt;    &lt;span class='ow'&gt;=&lt;/span&gt;  &lt;span class='n'&gt;x&lt;/span&gt;
+         &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='n'&gt;otherwise&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt;  &lt;span class='n'&gt;y&lt;/span&gt;
+    &lt;span class='n'&gt;min&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='n'&gt;y&lt;/span&gt;
+         &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='o'&gt;&amp;lt;&lt;/span&gt;  &lt;span class='n'&gt;y&lt;/span&gt;    &lt;span class='ow'&gt;=&lt;/span&gt;  &lt;span class='n'&gt;x&lt;/span&gt;
+         &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='n'&gt;otherwise&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt;  &lt;span class='n'&gt;y&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Basically the definition tells you that defining the &lt;strong&gt;compare&lt;/strong&gt; function is enough to for the other functions be inferred from.&lt;/p&gt;
+
+&lt;p&gt;One last thing about defining data types is the ability to create synonyms for existing types. This is done using the &lt;strong&gt;type&lt;/strong&gt; keyword and allows you to make your functions more readable. Here are a few examples:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='kr'&gt;type&lt;/span&gt; &lt;span class='kt'&gt;String&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='kt'&gt;Char&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt;
+
+&lt;span class='kr'&gt;type&lt;/span&gt; &lt;span class='kt'&gt;Name&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;String&lt;/span&gt;
+&lt;span class='kr'&gt;data&lt;/span&gt; &lt;span class='kt'&gt;Address&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='kt'&gt;None&lt;/span&gt; &lt;span class='o'&gt;|&lt;/span&gt; &lt;span class='kt'&gt;Addr&lt;/span&gt; &lt;span class='kt'&gt;String&lt;/span&gt;
+&lt;span class='kr'&gt;type&lt;/span&gt; &lt;span class='kt'&gt;Person&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='kt'&gt;Name&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt;&lt;span class='kt'&gt;Address&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='kr'&gt;type&lt;/span&gt; &lt;span class='kt'&gt;StringList&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='kt'&gt;String&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Haskell Basics</title>
+   <link href="http://rlgomes.github.com/work/haskell/2011/10/30/20.00-haskell-basics.html"/>
+   <updated>2011-10-30T00:00:00-07:00</updated>
+   <id>http://rlgomes.github.com/work/haskell/2011/10/30/20.00-haskell-basics</id>
+   <content type="html">&lt;p&gt;I will start my learning of Haskell by first going over how to write a simple program in Haskell and have it execute within the Haskell interpreter. Lets start with writing a simple &amp;#8220;Hello World&amp;#8221; application in Haskell:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='o'&gt;#!&lt;/span&gt; &lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='n'&gt;usr&lt;/span&gt;&lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='n'&gt;bin&lt;/span&gt;&lt;span class='o'&gt;/&lt;/span&gt;&lt;span class='n'&gt;env&lt;/span&gt; &lt;span class='n'&gt;runhaskell&lt;/span&gt;
+&lt;span class='kr'&gt;module&lt;/span&gt; &lt;span class='nn'&gt;Main&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;main&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='kr'&gt;where&lt;/span&gt;
+&lt;span class='nf'&gt;main&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;putStrLn&lt;/span&gt; &lt;span class='s'&gt;&amp;quot;Hello, World!&amp;quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;That is a pretty small program even when you compare to writing hello world in an imperative language such as C. I added the shebang to make sure you&amp;#8217;d be able to easily run this on a unix system. To run this you&amp;#8217;ll need to install GHC compiler and intpreter which are supported on all major OS&amp;#8217;s. For more information on getting GHC on your system have a look at: http://www.haskell.org/ghc/ .&lt;/p&gt;
+
+&lt;p&gt;Lets get into what makes a piece of code in Haskell. So unlike most mainstream languages that are imperative or object-oriented, functionl programming languages do not have the notion of a sequence of commands/instructions to execute. A functional programming language consists of a collection of functions that do a single task and return a result without any side-effects. I&amp;#8217;m bringing up the topic of side-effects so we can understand early on that you can&amp;#8217;t do any of the following in a function (by default):&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;throw an exception, raise an error&lt;/li&gt;
+
+&lt;li&gt;read/write to any file (including stdin/stdout)&lt;/li&gt;
+
+&lt;li&gt;change global state (global variables)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Side-effects are not &amp;#8220;easily&amp;#8221; represented as a pure function in a functional programming language.&lt;/p&gt;
+
+&lt;p&gt;Lets write our first function that takes a number and gives this number plus one:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;plus1&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='o'&gt;+&lt;/span&gt; &lt;span class='mi'&gt;1&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;When writing your functions make sure to always write the signature of the function. Writing the signature helps you understand what you&amp;#8217;re trying to write as well verifies that you haven&amp;#8217;t created any scenario in which your function returns an unexpected result:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;plus1&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='kt'&gt;Int&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Int&lt;/span&gt;
+&lt;span class='nf'&gt;plus1&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='o'&gt;+&lt;/span&gt; &lt;span class='mi'&gt;1&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;As you look at this function you&amp;#8217;ll find the notation is very similar to when you were writing mathematical expressions in school. Of couse now that we have this function lets load it into the ghci shell and try to apply it to a few different values:&lt;/p&gt;
+&lt;console&gt;
+&gt; ghci
+GHCi, version 7.0.3: http://www.haskell.org/ghc/  :? for help
+Loading package ghc-prim ... linking ... done.
+Loading package integer-gmp ... linking ... done.
+Loading package base ... linking ... done.
+Prelude&gt; :l test.hs
+[1 of 1] Compiling Main             ( test.hs, interpreted )
+Ok, modules loaded: Main.
+*Main&gt; plus1 0
+1
+*Main&gt; plus1 2
+3
+*Main&gt; plus1 (plus1 2)
+4
+*Main&gt;
+&lt;/console&gt;
+&lt;p&gt;Lets jump into deal with lists of data and how to write a few useful functions to deal with lists. The first thing to realize is that a list in Haskell is very simply represented as:&lt;/p&gt;
+&lt;pre&gt;
+[1,2,3,4]
+&lt;/pre&gt;
+&lt;p&gt;A string is a list of Char and therefore has the type [Char] and can be represented as:&lt;/p&gt;
+&lt;pre&gt;
+['a','b','c']
+&lt;/pre&gt;
+&lt;p&gt;which is in fact the string &amp;#8220;abc&amp;#8221;. Lists can also be expressed using the operator (:) which takes an element and adds it to the another list so the above list can also be presented as:&lt;/p&gt;
+&lt;pre&gt;
+1:(2:(3:(4:[])))
+&lt;/pre&gt;
+&lt;p&gt;With this operator we can also introduce pattern matching and how to write functions that can handle lists. Lets start by writing our very own length function that can calculate the length of a list. The first thing to write is the type of this function:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;len&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='kt'&gt;Int&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Int&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;The above signature is aready length takes a list of Ints and returns an Int. We can easily take this a step further and make this function polymorphic which allows it to be applied to a list of any type. The signature would look like so:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;len&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Int&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;The type a now represents any type that can be put in a list and with this we can write our length function, like this:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;len&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='kt'&gt;Int&lt;/span&gt;
+&lt;span class='nf'&gt;len&lt;/span&gt; &lt;span class='kt'&gt;[]&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='mi'&gt;0&lt;/span&gt;
+&lt;span class='nf'&gt;len&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='kt'&gt;:&lt;/span&gt;&lt;span class='n'&gt;xs&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;len&lt;/span&gt; &lt;span class='n'&gt;xs&lt;/span&gt; &lt;span class='o'&gt;+&lt;/span&gt; &lt;span class='mi'&gt;1&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;This definition reads very simply: the length of an empty list is 0 and the length of a list with an element x and a tail xs is equal to the length of the tail plus one. We&amp;#8217;ve introduced here how to do pattern matching on lists and also how polymorphism works when you want to create methods that can be used against various datatypes that share a common structure. The len function shown can be used against a list of integers as well as a string which is a list of Chars. Here&amp;#8217;s an example:&lt;/p&gt;
+&lt;console&gt;
+...
+Prelude&gt; :l test.hs
+[1 of 1] Compiling Main             ( test.hs, interpreted )
+Ok, modules loaded: Main.
+*Main&gt; len [3,2,1,3,4,5,5]
+7
+*Main&gt; len &quot;Hello, World!&quot;
+13
+&lt;/console&gt;
+&lt;p&gt;Polymorphism is one of the other things I find that Haskell does really well when compared to other languages. All other languages refer to polymorphism as templates and generics and are in no way as elegant or simple to understand as polymorphism is in Haskell.&lt;/p&gt;
+
+&lt;p&gt;Most of the operations on lists you&amp;#8217;ll ever need are already implemented in the Prelude library. Just search for &amp;#8220;haskell prelude&amp;#8221; and you&amp;#8217;ll find all of the available functions, but here are a few of the everyday useful ones:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;head&lt;/strong&gt; - returns the head of a list&lt;/li&gt;
+
+&lt;li&gt;&lt;strong&gt;last&lt;/strong&gt; - returns the last element of a list&lt;/li&gt;
+
+&lt;li&gt;&lt;strong&gt;tail&lt;/strong&gt; - returns the same list without the first element&lt;/li&gt;
+
+&lt;li&gt;&lt;strong&gt;init&lt;/strong&gt; - returns the same list without the last element&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;With these functions we can now start to talk about function composition. Which from algebra class when you had function &lt;em&gt;f&lt;/em&gt; and function &lt;em&gt;g&lt;/em&gt; and wanted to apply it to a single argument you&amp;#8217;d write something like so:&lt;/p&gt;
+&lt;pre&gt;
+(f o g) x
+&lt;/pre&gt;
+&lt;p&gt;In haskell there is the composition function which can take two functions as its arguments and compose them together. This is how the definition of such a function might look:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;b&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;c&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;b&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;c&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;span class='nf'&gt;f&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;g&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='nf'&gt;\&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;g&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;x&lt;/span&gt;&lt;span class='p'&gt;))&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;We&amp;#8217;ve suddenly introduced 2 other concepts with this defintion:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;infix functions&lt;/strong&gt; - By default functions are defined in a prefix manner which means the function name appears before the arguments. When you want to declare functions that will appears in the middle of their arguments such as the +,/,- operators then you need to declare them as you see above wrapped with brackets and then you can define them with the function name in the middle of the arguments. You can also turn any regular prefix function into an infix function by just putting single quotes around it like so: &lt;em&gt;&lt;code&gt;div&lt;/code&gt;&lt;/em&gt; is now an infix version of the prefix &lt;em&gt;div&lt;/em&gt; function.&lt;/p&gt;
+&lt;/li&gt;
+
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;lambda expression&lt;/strong&gt; - A lambda expression allows you to define an in place function in a more mathematical friendly format. You basically describe for each x what the function will do. So for example:&lt;pre&gt;
+\x -&gt; x + 2
+&lt;/pre&gt; declares a function that for each x passed as an argument, the function will returns x plus 2. Lambda expressions are great for saving space and not having to declare additional named functions when you just need a function to get the job done there and then.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I&amp;#8217;ll end this post with a few examples of how function composition works and how it can be useful to write functions composed of other well known functions. To start lets take a few of the useful prelude list functions we shown above and try to write a few other useful list functions by using composition:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;lets write a function that can give you the penultimate element of a list. We can simply call it &lt;strong&gt;penult&lt;/strong&gt;&lt;/li&gt;
+
+&lt;li&gt;lets write a function that can give you the same list without the first and last element and we&amp;#8217;ll call it &lt;strong&gt;middle&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;So for the &lt;strong&gt;penult&lt;/strong&gt; function we can compose the functions &lt;strong&gt;init&lt;/strong&gt; and &lt;strong&gt;last&lt;/strong&gt;, the first will give us the list without the last element and the &lt;strong&gt;last&lt;/strong&gt; call will give us the last element of that list which is the penultimate element, like so:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;penult&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='n'&gt;a&lt;/span&gt;
+&lt;span class='nf'&gt;penult&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;last&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;init&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;and the &lt;strong&gt;middle&lt;/strong&gt; function is the composition of the &lt;strong&gt;init&lt;/strong&gt; and &lt;strong&gt;tail&lt;/strong&gt; functions, like this:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='hs'&gt;&lt;span class='nf'&gt;midddle&lt;/span&gt; &lt;span class='ow'&gt;::&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt; &lt;span class='ow'&gt;-&amp;gt;&lt;/span&gt; &lt;span class='p'&gt;[&lt;/span&gt;&lt;span class='n'&gt;a&lt;/span&gt;&lt;span class='p'&gt;]&lt;/span&gt;
+&lt;span class='nf'&gt;middle&lt;/span&gt; &lt;span class='ow'&gt;=&lt;/span&gt; &lt;span class='n'&gt;tail&lt;/span&gt; &lt;span class='o'&gt;.&lt;/span&gt; &lt;span class='n'&gt;init&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;By now you can see that the Haskell language is extremely powerful and allows you to take existing functions and put them together in a very simple way that alows you to create new and useful functions quickly and cleanly.&lt;/p&gt;
+
+&lt;p&gt;In my next post I&amp;#8217;ll start to dive into custom data types and how to pattern match those when writing your own functions and hopefully get into representing Trees, Graphs and other datatypes and how writing functions for those in a functional language is extremely clean and simple.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Back to Haskell</title>
+   <link href="http://rlgomes.github.com/work/haskell/2011/10/29/21.00-why-haskell-rocks.html"/>
+   <updated>2011-10-29T00:00:00-07:00</updated>
+   <id>http://rlgomes.github.com/work/haskell/2011/10/29/21.00-why-haskell-rocks</id>
+   <content type="html">&lt;p&gt;So I recently decided to get back on the functional programming band wagon and get re-acquainted with haskell. Haskell is one of very few purely functional languages that really expresses programming in a very beautiful mathematical manner. I learnt Haskell early in university and was always fascinated by how simple and yet powerful the language was.&lt;/p&gt;
+
+&lt;p&gt;Of course, shortly after leaving school I found that functional programming languages were in no way mainstream or being used by software companies at large. This was of course in 2003 when I finished my masters and things have changed quite a bit in the past 8 years. In today&amp;#8217;s programming scene there are a few functional programming languages that are being used quite extensively. Erlang and Scala seem to have found mainstream adoption in a few places and even my beloved Haskell has some usage behind the curtains at Facebook and Google.&lt;/p&gt;
+
+&lt;p&gt;Now I haven&amp;#8217;t touched Haskell in ages but I thought I&amp;#8217;d try and relearn Haskell and be able to write a few simple tools in Haskell. I will be documenting my progress in the form of a few blog posts and I hope to spike the interest of others in the language or at least make it easier for myself in the future when I want to review the language quickly.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Python performance module</title>
+   <link href="http://rlgomes.github.com/work/python/2011/06/03/00.00-python-performance-module.html"/>
+   <updated>2011-06-03T00:00:00-07:00</updated>
+   <id>http://rlgomes.github.com/work/python/2011/06/03/00.00-python-performance-module</id>
+   <content type="html">&lt;p&gt;I just created a new Python performance module to easily give you performance information about important functions with in your existing Python code without having to litter your code with test code and checks here and there. The new library is called pyperf and it uses Python decorators to mark the methods you want to track performance statistics on.&lt;/p&gt;
+
+&lt;p&gt;I wrote this because I needed to do some performance measurement on another project that I&amp;#8217;m going to put on my github account that is an old school project on l-systems and generating/rendering those l-systems into nice 3D images that look like organic objects (i.e. trees, bushes, shrubs in a game). I&amp;#8217;ll write up another post on that library a little later for now I wanted to release this module in case anyone else finds it useful and wants to help extend and make it useful for themselves and others.&lt;/p&gt;
+
+&lt;p&gt;The pyperf library is very simple to use and you can start measuring the performance of your critical methods quickly. The first thing to do is decorate the functions you want with the pyperf.measure decorator. By default the pyperf library is not enabled and to enable it you have two choices:&lt;/p&gt;
+
+&lt;p&gt;1. Set the pyperf.PYPERF to True and this will make it so that the pyperf library is monitoring the function that have been previously decorated.&lt;/p&gt;
+
+&lt;p&gt;2. Sending the signal SIGUSR1 to the Python application you have decorated with the pyperf.measure decorat will enable/disable the pyperf library which will print the current state to the logs so you know if its turned on or off.&lt;/p&gt;
+
+&lt;p&gt;The performance report will be printed at the end of your codes execution when your Python application exits. If you&amp;#8217;d like to get a report at runtime then send the SIGUSR2 signal to the Python application and the pyperf library will print the current report information.&lt;/p&gt;
+
+&lt;p&gt;There are a few configuration options that you have that can be set by changing the global variables:&lt;/p&gt;
+
+&lt;p&gt;pyperf.PYPERF_TRACKARGUMENTS - when set to True the pyperf report will track the function calls by the arguments to the same function and separating the results by the arguments.&lt;/p&gt;
+
+&lt;p&gt;pyperf.PYPERF_TRACKCALLER - when set to True the pyperf report will track the function calls by the caller to the function you decorated.&lt;/p&gt;
+
+&lt;p&gt;There are still a few features I&amp;#8217;d like to implement which I&amp;#8217;ve added to the github issues of this repository and I think that configuring the library could be done in a nicer way but for now this is a first good step in the direction of creating a nice and clean performance library for any Python code.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Android Development and Ant</title>
+   <link href="http://rlgomes.github.com/work/java/android/2011/03/09/21.00-android-development-and-ant.html"/>
+   <updated>2011-03-09T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/java/android/2011/03/09/21.00-android-development-and-ant</id>
+   <content type="html">&lt;p&gt;When thinking about automatiing the building/testing of an Android project I ran across the necessity to do so from the command line and not using Eclipse. After some searching I found that its quite easy to get this done with the tools that Android has already available which can generate a simple build.xml file to be use for building/installing/packaging an Android project.&lt;/p&gt;
+
+&lt;p&gt;To build your Ant build file you can use simply the following from the root of your project:&lt;/p&gt;
+&lt;pre&gt;
+android update project -p .
+&lt;/pre&gt;
+&lt;p&gt;Now if you need to link additional Android projects to this one you can do so with the following command:&lt;/p&gt;
+&lt;pre&gt;
+android update project -p . -l path/to/other/android/project
+&lt;/pre&gt;
+&lt;p&gt;To see the available targets just issue the ususal: &lt;em&gt;ant -p&lt;/em&gt; and you&amp;#8217;ll get all of the available targets:&lt;/p&gt;
+&lt;pre&gt;
+Main targets:
+
+ clean      Removes output files created by other targets.
+ compile    Compiles project's .java files into .class files
+ debug      Builds the application and signs it with a debug key.
+ install    Installs/reinstalls the debug package onto a running emulator or
+            device. If the application was previously installed, the signatures
+            must match.
+ release    Builds the application. The generated apk file must be signed before                             it is published.
+ uninstall  Uninstalls the application from a running emulator or device.
+Default target: help
+&lt;/pre&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Fixing Eclipse Content Assist</title>
+   <link href="http://rlgomes.github.com/work/java/eclipse/2011/03/06/13.00-fixing-eclipse-content-assist.html"/>
+   <updated>2011-03-06T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/java/eclipse/2011/03/06/13.00-fixing-eclipse-content-assist</id>
+   <content type="html">&lt;p&gt;If you use eclipse like I do for developing anything form Python scripts to Android projects you may have noticed that recently your content assist feature is either really slow or literally freezes up eclipse. Well you&amp;#8217;re in luck because the reason its most likely doing this is because of the ADT Plugin that you&amp;#8217;re using to do Android development.&lt;/p&gt;
+
+&lt;p&gt;So it seems there are a few bugs open on the subject but put simply the content assist tries to look for the Android source code under each of the Android folders at &lt;em&gt;sdk_location/platforms/android-x&lt;/em&gt; (where x is the android level). When the content assist can&amp;#8217;t find the &lt;em&gt;sources&lt;/em&gt; folder then it just goes nuts and wastes alot of cpu cycles, the easy fix is to create a simple &lt;em&gt;sources&lt;/em&gt; folder under each of those &lt;em&gt;android-x&lt;/em&gt; folders and your content assist will be back to behaving as usual.&lt;/p&gt;
+
+&lt;p&gt;The longer and less easy fix is to download the source for each of those builds and place it there, but I really don&amp;#8217;t think the majority of developers care for all of the source code.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>New look and feel for DTF documentation</title>
+   <link href="http://rlgomes.github.com/work/java/dtf/2011/01/28/23.00-new-generated-documentation-look-for-dtf.html"/>
+   <updated>2011-01-28T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/java/dtf/2011/01/28/23.00-new-generated-documentation-look-for-dtf</id>
+   <content type="html">&lt;p&gt;Spent sometime cleaning up the way I generate DTF documentation so that it outputs the HTML elements with the required class and id attributes. With this I am now able to correctly style the DTF generated documentation to make it a little easier on the eyes. As you can see from a few comparative screenshots below there are a few good improvements and I&amp;#8217;ll definitely be working on cleaning this up further but I&amp;#8217;m pretty happy with the current results.&lt;/p&gt;
+&lt;figure&gt;
+    &lt;img src='/images/2011/jan/old_dtf_index_doc.png' /&gt;
+    &lt;figcaption&gt;old index page&lt;/figcaption&gt;
+&lt;/figure&gt;&lt;figure&gt;
+    &lt;img src='/images/2011/jan/new_dtf_index_doc.png' /&gt;
+    &lt;figcaption&gt;new index page&lt;/figcaption&gt;
+&lt;/figure&gt;&lt;figure&gt;
+    &lt;img src='/images/2011/jan/old_dtf_tag_doc.png' /&gt;
+    &lt;figcaption&gt;old tag documentation page&lt;/figcaption&gt;
+&lt;/figure&gt;&lt;figure&gt;
+    &lt;img src='/images/2011/jan/new_dtf_tag_doc.png' /&gt;
+    &lt;figcaption&gt;new tag documentation page&lt;/figcaption&gt;
+&lt;/figure&gt;&lt;figure&gt;
+    &lt;img src='/images/2011/jan/old_dtf_feature_doc.png' /&gt;
+    &lt;figcaption&gt;old feature documentation page&lt;/figcaption&gt;
+&lt;/figure&gt;&lt;figure&gt;
+    &lt;img src='/images/2011/jan/new_dtf_feature_doc.png' /&gt;
+    &lt;figcaption&gt;new feature documentation page&lt;/figcaption&gt;
+&lt;/figure&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Python decorators</title>
+   <link href="http://rlgomes.github.com/work/python/2011/01/22/12.00-python-decorators.html"/>
+   <updated>2011-01-22T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/python/2011/01/22/12.00-python-decorators</id>
+   <content type="html">&lt;p&gt;I recently discovered decorators in Python and have been pretty impressed with how they work. Basically it allows you to change the behavior of a function or method without having to alter the code that represents that function. Instead with a decorator you basically label/annotate the method with a keyword that basically identifies which decorator to apply to this function.&lt;/p&gt;
+
+&lt;p&gt;Lets look at the simple example of you having creating a bunch of functions that do different tasks and then when you&amp;#8217;re running in DEBUG mode you&amp;#8217;d like to be able to get the amount of time spent on each of these calls. Lets first piece together a simple Python module with a few functions that do some simple tasks in it, for this example I&amp;#8217;ve decided to create a simple logger module:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='python'&gt;&lt;span class='k'&gt;def&lt;/span&gt; &lt;span class='nf'&gt;i&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;):&lt;/span&gt;
+    &lt;span class='k'&gt;print&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;I: &lt;/span&gt;&lt;span class='si'&gt;%s&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;%&lt;/span&gt; &lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='k'&gt;def&lt;/span&gt; &lt;span class='nf'&gt;e&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;):&lt;/span&gt;
+    &lt;span class='k'&gt;print&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;E: &lt;/span&gt;&lt;span class='si'&gt;%s&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;%&lt;/span&gt; &lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='k'&gt;def&lt;/span&gt; &lt;span class='nf'&gt;d&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;):&lt;/span&gt;
+    &lt;span class='k'&gt;print&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;D: &lt;/span&gt;&lt;span class='si'&gt;%s&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;%&lt;/span&gt; &lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='k'&gt;def&lt;/span&gt; &lt;span class='nf'&gt;w&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;):&lt;/span&gt;
+    &lt;span class='k'&gt;print&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;W: &lt;/span&gt;&lt;span class='si'&gt;%s&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;%&lt;/span&gt; &lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;There are four simple methods that log info, error, debug and warning messages and now we can design our perf module that will be used to decorate these methods so we can do things such as counting the occurrences of method calls or even just calculate the average time spent on these calls at runtime. Lets start by putting together the decorator that can calculate how much time we spent on each individual call.&lt;/p&gt;
+
+&lt;p&gt;So a decorator is nothing more than a function that accepts another function as an argument. The very basic decorator definition looks like so:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='python'&gt;&lt;span class='kn'&gt;import&lt;/span&gt; &lt;span class='nn'&gt;time&lt;/span&gt;
+
+&lt;span class='k'&gt;def&lt;/span&gt; &lt;span class='nf'&gt;track&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;f&lt;/span&gt;&lt;span class='p'&gt;):&lt;/span&gt;
+    &lt;span class='k'&gt;def&lt;/span&gt; &lt;span class='nf'&gt;new_f&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;*&lt;/span&gt;&lt;span class='n'&gt;args&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='o'&gt;**&lt;/span&gt;&lt;span class='n'&gt;kwargs&lt;/span&gt;&lt;span class='p'&gt;):&lt;/span&gt;
+        &lt;span class='n'&gt;t&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='n'&gt;time&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;time&lt;/span&gt;&lt;span class='p'&gt;()&lt;/span&gt;&lt;span class='o'&gt;*&lt;/span&gt;&lt;span class='mi'&gt;1000&lt;/span&gt;
+        &lt;span class='n'&gt;ret&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;*&lt;/span&gt;&lt;span class='n'&gt;args&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='o'&gt;**&lt;/span&gt;&lt;span class='n'&gt;kwargs&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+        &lt;span class='n'&gt;dur&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;time&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;time&lt;/span&gt;&lt;span class='p'&gt;()&lt;/span&gt; &lt;span class='o'&gt;*&lt;/span&gt; &lt;span class='mi'&gt;1000&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='o'&gt;-&lt;/span&gt; &lt;span class='n'&gt;t&lt;/span&gt;
+        &lt;span class='n'&gt;name&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;__name__&lt;/span&gt;
+        &lt;span class='k'&gt;print&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;&lt;/span&gt;&lt;span class='si'&gt;%s&lt;/span&gt;&lt;span class='s'&gt; executed in &lt;/span&gt;&lt;span class='si'&gt;%d&lt;/span&gt;&lt;span class='s'&gt;ms&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;%&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;name&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='n'&gt;dur&lt;/span&gt;&lt;span class='p'&gt;))&lt;/span&gt;
+        &lt;span class='k'&gt;return&lt;/span&gt; &lt;span class='n'&gt;ret&lt;/span&gt;
+
+    &lt;span class='k'&gt;return&lt;/span&gt; &lt;span class='n'&gt;new_f&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;This is a decorator defined as a function you basically have to return a function as part of the contract of defining a decorator this way. In our case we create a simple function that wraps the existing one and return that. In this new function we&amp;#8217;re just making the same call as your code intended but measuring the time spent. The &lt;em&gt;args&lt;/em&gt; are the arguments passed to the original function and the &lt;em&gt;kwargs&lt;/em&gt; are the keyword arguments passed to the original function.&lt;/p&gt;
+
+&lt;p&gt;Now Lets put together a silly test that simply logs a bunch of lines with our test logger. Here is this test:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='python'&gt;&lt;span class='kn'&gt;import&lt;/span&gt; &lt;span class='nn'&gt;logger&lt;/span&gt;
+
+&lt;span class='n'&gt;logger&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;i&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;just a message&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;span class='n'&gt;logger&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;e&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;oh crap!&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;span class='n'&gt;logger&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;d&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;debug some stuff&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;span class='n'&gt;logger&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;w&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;you should have a look a this&amp;quot;&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;We&amp;#8217;re ready to go back to the original module and add the @track decorator to each of our calls. Our module will look like so:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='python'&gt;&lt;span class='kn'&gt;from&lt;/span&gt; &lt;span class='nn'&gt;perf&lt;/span&gt; &lt;span class='kn'&gt;import&lt;/span&gt; &lt;span class='n'&gt;track&lt;/span&gt;
+
+&lt;span class='nd'&gt;@track&lt;/span&gt;
+&lt;span class='k'&gt;def&lt;/span&gt; &lt;span class='nf'&gt;i&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;):&lt;/span&gt;
+    &lt;span class='k'&gt;print&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;I: &lt;/span&gt;&lt;span class='si'&gt;%s&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;%&lt;/span&gt; &lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='nd'&gt;@track&lt;/span&gt;
+&lt;span class='k'&gt;def&lt;/span&gt; &lt;span class='nf'&gt;e&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;):&lt;/span&gt;
+    &lt;span class='k'&gt;print&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;E: &lt;/span&gt;&lt;span class='si'&gt;%s&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;%&lt;/span&gt; &lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='nd'&gt;@track&lt;/span&gt;
+&lt;span class='k'&gt;def&lt;/span&gt; &lt;span class='nf'&gt;d&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;):&lt;/span&gt;
+    &lt;span class='k'&gt;print&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;D: &lt;/span&gt;&lt;span class='si'&gt;%s&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;%&lt;/span&gt; &lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+
+&lt;span class='nd'&gt;@track&lt;/span&gt;
+&lt;span class='k'&gt;def&lt;/span&gt; &lt;span class='nf'&gt;w&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;):&lt;/span&gt;
+    &lt;span class='k'&gt;print&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;W: &lt;/span&gt;&lt;span class='si'&gt;%s&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;%&lt;/span&gt; &lt;span class='n'&gt;msg&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;When we execute our same test module we&amp;#8217;ll now see the following in the logs&lt;/p&gt;
+&lt;pre&gt;
+&gt; python test.py
+I: just a message
+i executed in 0ms
+E: oh crap!
+e executed in 0ms
+D: debug some stuff
+d executed in 0ms
+W: you should have a look a this
+w executed in 0ms
+&lt;/pre&gt;
+&lt;p&gt;Of course the amount of time spent is less than 0ms and that&amp;#8217;s not a surprise but what you can see here is that we now have the ability to track the performance of these calls by simply marking them with the decorator keyword.&lt;/p&gt;
+
+&lt;p&gt;Lets take sometime to make that decorator extra smart and have it turned off/on based on a global DEBUG flag. The end result should look like so:&lt;/p&gt;
+&lt;div class='highlight'&gt;&lt;pre&gt;&lt;code class='python'&gt;&lt;span class='kn'&gt;import&lt;/span&gt; &lt;span class='nn'&gt;time&lt;/span&gt;
+
+&lt;span class='k'&gt;global&lt;/span&gt; &lt;span class='n'&gt;DEBUG&lt;/span&gt;
+&lt;span class='n'&gt;DEBUG&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='bp'&gt;False&lt;/span&gt;
+
+&lt;span class='k'&gt;def&lt;/span&gt; &lt;span class='nf'&gt;track&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;f&lt;/span&gt;&lt;span class='p'&gt;):&lt;/span&gt;
+
+    &lt;span class='k'&gt;global&lt;/span&gt; &lt;span class='n'&gt;DEBUG&lt;/span&gt;
+
+    &lt;span class='k'&gt;if&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt; &lt;span class='n'&gt;DEBUG&lt;/span&gt; &lt;span class='p'&gt;):&lt;/span&gt;
+        &lt;span class='k'&gt;def&lt;/span&gt; &lt;span class='nf'&gt;new_f&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;*&lt;/span&gt;&lt;span class='n'&gt;args&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='o'&gt;**&lt;/span&gt;&lt;span class='n'&gt;kwargs&lt;/span&gt;&lt;span class='p'&gt;):&lt;/span&gt;
+            &lt;span class='n'&gt;t&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='n'&gt;time&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;time&lt;/span&gt;&lt;span class='p'&gt;()&lt;/span&gt;&lt;span class='o'&gt;*&lt;/span&gt;&lt;span class='mi'&gt;1000&lt;/span&gt;
+            &lt;span class='n'&gt;ret&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='o'&gt;*&lt;/span&gt;&lt;span class='n'&gt;args&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='o'&gt;**&lt;/span&gt;&lt;span class='n'&gt;kwargs&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt;
+            &lt;span class='n'&gt;dur&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;time&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;time&lt;/span&gt;&lt;span class='p'&gt;()&lt;/span&gt; &lt;span class='o'&gt;*&lt;/span&gt; &lt;span class='mi'&gt;1000&lt;/span&gt;&lt;span class='p'&gt;)&lt;/span&gt; &lt;span class='o'&gt;-&lt;/span&gt; &lt;span class='n'&gt;t&lt;/span&gt;
+            &lt;span class='n'&gt;name&lt;/span&gt; &lt;span class='o'&gt;=&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt;&lt;span class='o'&gt;.&lt;/span&gt;&lt;span class='n'&gt;__name__&lt;/span&gt;
+            &lt;span class='k'&gt;print&lt;/span&gt;&lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='s'&gt;&amp;quot;&lt;/span&gt;&lt;span class='si'&gt;%s&lt;/span&gt;&lt;span class='s'&gt; executed in &lt;/span&gt;&lt;span class='si'&gt;%d&lt;/span&gt;&lt;span class='s'&gt;ms&amp;quot;&lt;/span&gt; &lt;span class='o'&gt;%&lt;/span&gt; &lt;span class='p'&gt;(&lt;/span&gt;&lt;span class='n'&gt;name&lt;/span&gt;&lt;span class='p'&gt;,&lt;/span&gt; &lt;span class='n'&gt;dur&lt;/span&gt;&lt;span class='p'&gt;))&lt;/span&gt;
+            &lt;span class='k'&gt;return&lt;/span&gt; &lt;span class='n'&gt;ret&lt;/span&gt;
+
+        &lt;span class='k'&gt;return&lt;/span&gt; &lt;span class='n'&gt;new_f&lt;/span&gt;
+    &lt;span class='k'&gt;else&lt;/span&gt;&lt;span class='p'&gt;:&lt;/span&gt;
+        &lt;span class='k'&gt;return&lt;/span&gt; &lt;span class='n'&gt;f&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;This actually shows that you can make a decorator that adds no overhead when it is turned off because it just returns the same function that was already in place before the decorator had been used. Basically we can create a set of performance measuring decorators that have a negligible impact on our code when it running in production.&lt;/p&gt;
+
+&lt;p&gt;Of course there are more things that can be done with Python decorators but I just wanted to write up the starting point for future reference and hopefully inspire others to come up with some brilliant uses of Python decorators.&lt;/p&gt;
+
+&lt;p&gt;I created a small Eclipse project while writing this entry and you can get it from &lt;a href='/images/decorators.tar.gz'&gt;here&lt;/a&gt; if you&amp;#8217;d like.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Timetracker with toggl support</title>
+   <link href="http://rlgomes.github.com/work/python/2011/01/21/09.00-timetracker-with-toggl.html"/>
+   <updated>2011-01-21T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/python/2011/01/21/09.00-timetracker-with-toggl</id>
+   <content type="html">&lt;p&gt;The timetracker tool is now using the online time tracking service toggl as the default tracker and will automatically create new projects by the name of the activity you&amp;#8217;ve given your current task and file all of those tasks under the workspace timetracker. You can change the workspace name in your configuration file.&lt;/p&gt;
+
+&lt;p&gt;Once you&amp;#8217;ve started tracking your tasks you&amp;#8217;ll be able to open up toggl and see some pretty awesome pie charts of where you&amp;#8217;re spending your time.&lt;/p&gt;
+&lt;center&gt;&lt;img src='/images/toggl_pie_chart.png' /&gt;&lt;/center&gt;
+&lt;p&gt;Of course it will be nicer to make more interesting charts/graphs once toggl matures a bit further but for now at least you can use timetracker to really figure out where you spend most of your time when you&amp;#8217;re on your laptop.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Continuous Integration Environment for DTF</title>
+   <link href="http://rlgomes.github.com/work/java/dtf/2011/01/17/16.00-continuous-integration-environment-for-dtf.html"/>
+   <updated>2011-01-17T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/java/dtf/2011/01/17/16.00-continuous-integration-environment-for-dtf</id>
+   <content type="html">&lt;p&gt;I&amp;#8217;ve been working on building a CI environment for DTF for a while now and I&amp;#8217;m at the stage where the CI environment I put together work quite well for me. I am using Amazon&amp;#8217;s EC2 to host my CI server which has a few simple scripts that when the EC2 instance is started will do the following:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;checkout my DTF source tree&lt;/li&gt;
+
+&lt;li&gt;build DTF&lt;/li&gt;
+
+&lt;li&gt;generate the DTF Documentation (JavaDoc documentation that generates documentation for all tags in DTF) to &lt;a href='http://rlgomes.github.com/dtf/'&gt;here&lt;/a&gt;&lt;/li&gt;
+
+&lt;li&gt;run the JUnit tests &amp;amp; DTF unit test suite and post the result to &lt;a href='http://rlgomes.github.com/dtf/results/html/'&gt;here&lt;/a&gt;&lt;/li&gt;
+
+&lt;li&gt;run the DTF performance verification tests and post the results to &lt;a href='https://github.com/rlgomes/dtf/wiki/Performance-test-results'&gt;here&lt;/a&gt;&lt;/li&gt;
+
+&lt;li&gt;shutdown the EC2 instance&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Takes about 20 minutes to run through everything and the instance itself stays up and running for an additional 10 minutes (in case I need to ssh into the instance for any maintenance).&lt;/p&gt;
+
+&lt;p&gt;There are quite a few tools/technologies that were used to achieve the above and I&amp;#8217;ll now try to give a very simple explanation of each one used:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;I choose to use Amazon&amp;#8217;s EC2 because it was really easy to get an instance up and running on EC2 and my only issue was how do I get that instance to start and stop on demand. After some investigation I wrote up a simple tool that would generate the HTTP POST/GET calls that I could use to start and stop my instances. This tool is available &lt;a href='https://github.com/rlgomes/ec2-tools'&gt;here&lt;/a&gt; and can be used by anyone else wanting to remotely administer their EC2 instances.&lt;/p&gt;
+&lt;/li&gt;
+
+&lt;li&gt;
+&lt;p&gt;The result tracking of the JUnit tests and DTF&amp;#8217;s unit test suite are all done by outputting results into a JUnit XML format and then using the JUnit report task in Ant to generate the simple HTML reports.&lt;/p&gt;
+&lt;/li&gt;
+
+&lt;li&gt;
+&lt;p&gt;The graphs generated from executing DTF&amp;#8217;s performance verification tests are generated using &lt;a href='http://code.google.com/apis/chart/'&gt;Google&amp;#8217;s Charting API&lt;/a&gt;. After poking around at the API for a while I basically made the DTF performance tests record their performance results by appending to existing event files and then outputting at the end of the PVT execution all of the performance results gathered to a file that could be executed to download all of the chart PNG files and then push those to github to be shown in a wiki page.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;There are still a few things that need some cleaning up in terms of polish and also I would like to include the DVT (Deployment Verification Tests) to this automated testing but for now I am quite happy with how easily I can validate my changes to DTF do not break anything in an unpredictable manner.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Working on timetracker</title>
+   <link href="http://rlgomes.github.com/work/python/2011/01/17/14.00-timetracker.html"/>
+   <updated>2011-01-17T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/python/2011/01/17/14.00-timetracker</id>
+   <content type="html">&lt;p&gt;Been working on a time tracking utitliy for a while now and made &lt;a href='http://github.com/rlgomes/timetracker'&gt;timetracker&lt;/a&gt; to basically track what I do on a daily basis on my gnome desktop. From being able to tell when I&amp;#8217;m chatting with a friend to on the web doing social interactions on facebook or twitter. The application works very well for me and has been built so you could easily extend it to monitor your Mac or Windows desktop by creating your own &lt;em&gt;windowmanager&lt;/em&gt; instance.&lt;/p&gt;
+
+&lt;p&gt;The reporting output has also changed significantly from starting with a default of using the hamster time tracking utility to moving to an the online toggl service which can handle the amount of data generated on a daily basis by my usage patterns. The hamster applet wasn&amp;#8217;t designed to handle a few thousand task changes per day and was really having issues keeping up. I filed a bug &lt;a href='https://bugs.launchpad.net/ubuntu/+source/hamster-applet/+bug/685001'&gt;here&lt;/a&gt; in the hopes that gets fixed in the future. Meanwhile the default tracker is the toggl tracker.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href='http://www.toggl.com'&gt;toggl&lt;/a&gt; offers a free account for tracking your activities and seems to have a simple and clean interface. I still need to figure out exactly how to inject the tasks into each project/workspace in a way that makes toggl&amp;#8217;s stats and graphs interesting to the end user.&lt;/p&gt;
+
+&lt;p&gt;If you&amp;#8217;re interested in trying out &lt;a href='http://github.com/rlgomes/timetracker'&gt;timetracker&lt;/a&gt;, then start by reading the README at the base of the project and it will let you know how to install on linux system. For those of you interested in using this on another OS please contact me so we can work out how to achieve this.&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>Introducing DTF</title>
+   <link href="http://rlgomes.github.com/work/java/dtf/2011/01/17/13.00-introducing-dtf.html"/>
+   <updated>2011-01-17T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/java/dtf/2011/01/17/13.00-introducing-dtf</id>
+   <content type="html">&lt;p&gt;DTF is my testing framework that has been in development for 4+ years and has survived my transition from Sun Microsystems to Yahoo. It was open sourced since May 2010. Now that I have my blog up and running I thought I&amp;#8217;d make one of my first posts be an introduction to DTF and what it can do.&lt;/p&gt;
+
+&lt;p&gt;To start DTF stands for Distributed Testing Framework and it is written in 100% Java so that it can be easily executed on any environment where Java is supported. The tests in DTF are written in XML and unlike some of the XML languages you&amp;#8217;ve seen its sort of a mash-up of Ant + Jelly + Some additional features you&amp;#8217;ve never seen in XML.&lt;/p&gt;
+
+&lt;p&gt;The biggest advantage in DTF vs any other Java based distributed testing tool is that you can write a test that interacts with N different machines and the test explicitly describes all of the interactions of the components in your system in one easy to read XML. Most other framework rely on multiple configuration files and even different files to describe the behavior of each peace. Aside from that there is also the feature to deploy your setup to your host machines from a single machine using an XML format to describe your setup.&lt;/p&gt;
+
+&lt;p&gt;With all of this the best thing to do is to start by reading the documentation written for those interested in DTF and to start really digging in to what DTF can do for you. DTF&amp;#8217;s documentation can be found here: https://github.com/rlgomes/dtf/wiki&lt;/p&gt;</content>
+ </entry>
+ 
+ <entry>
+   <title>My First Post</title>
+   <link href="http://rlgomes.github.com/work/personal/2011/01/17/12.00-first-post.html"/>
+   <updated>2011-01-17T00:00:00-08:00</updated>
+   <id>http://rlgomes.github.com/work/personal/2011/01/17/12.00-first-post</id>
+   <content type="html">&lt;p&gt;Just got the blog up and running with Jekyll and thought I&amp;#8217;d post a quick note to see how things look. This is nothing fancy and just makes tracking my time and interest in projects very easy since adding a new post is creating a simple text file and checking it in.&lt;/p&gt;
+
+&lt;p&gt;Hopefully I will be able to write more on the things I&amp;#8217;m currently working on in terms of technology as well as some of my hobbies which include music and piano playing. With time I&amp;#8217;ll make things look a little nicer but I really want something simple and easy on the eyes.&lt;/p&gt;</content>
+ </entry>
+ 
+ 
+</feed>

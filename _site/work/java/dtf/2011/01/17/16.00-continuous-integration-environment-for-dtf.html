@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Continuous Integration Environment for DTF</title>
+        <meta name="description" content="Rodney's Blog">
+        <meta name="author" content="Rodney Gomes">
+
+        <link rel="alternate"
+              type="application/rss+xml"
+              title="Rodney's Corner RSS Feed"
+              href="http://feeds.feedburner.com/rlgomesgithubcom/feed"/>
+
+        <link href="/css/bootstrap.css" rel="stylesheet">
+        <link href="/css/main.css" rel="stylesheet"/>
+    </head>
+    <body>
+
+    <div class="topbar">
+      <div class="fill">
+        <div class="container">
+          <a class="brand" href="/">Rodney's Corner</a>
+          <ul class="nav">
+            <li class="active"><a href="/">Blog</a></li>
+            <li><a href="/archive.html">Archive</a></li>
+            <li><a href="/about.html">About</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="content">
+        <div class="page-header">
+          <h1>Continuous Integration Environment for DTF</h1>
+        </div>
+        <div class="row">
+          <div class="span10">
+             <article>
+                   <div id="post.body"><p>I&#8217;ve been working on building a CI environment for DTF for a while now and I&#8217;m at the stage where the CI environment I put together work quite well for me. I am using Amazon&#8217;s EC2 to host my CI server which has a few simple scripts that when the EC2 instance is started will do the following:</p>
+
+<ol>
+<li>checkout my DTF source tree</li>
+
+<li>build DTF</li>
+
+<li>generate the DTF Documentation (JavaDoc documentation that generates documentation for all tags in DTF) to <a href='http://rlgomes.github.com/dtf/'>here</a></li>
+
+<li>run the JUnit tests &amp; DTF unit test suite and post the result to <a href='http://rlgomes.github.com/dtf/results/html/'>here</a></li>
+
+<li>run the DTF performance verification tests and post the results to <a href='https://github.com/rlgomes/dtf/wiki/Performance-test-results'>here</a></li>
+
+<li>shutdown the EC2 instance</li>
+</ol>
+
+<p>Takes about 20 minutes to run through everything and the instance itself stays up and running for an additional 10 minutes (in case I need to ssh into the instance for any maintenance).</p>
+
+<p>There are quite a few tools/technologies that were used to achieve the above and I&#8217;ll now try to give a very simple explanation of each one used:</p>
+
+<ul>
+<li>
+<p>I choose to use Amazon&#8217;s EC2 because it was really easy to get an instance up and running on EC2 and my only issue was how do I get that instance to start and stop on demand. After some investigation I wrote up a simple tool that would generate the HTTP POST/GET calls that I could use to start and stop my instances. This tool is available <a href='https://github.com/rlgomes/ec2-tools'>here</a> and can be used by anyone else wanting to remotely administer their EC2 instances.</p>
+</li>
+
+<li>
+<p>The result tracking of the JUnit tests and DTF&#8217;s unit test suite are all done by outputting results into a JUnit XML format and then using the JUnit report task in Ant to generate the simple HTML reports.</p>
+</li>
+
+<li>
+<p>The graphs generated from executing DTF&#8217;s performance verification tests are generated using <a href='http://code.google.com/apis/chart/'>Google&#8217;s Charting API</a>. After poking around at the API for a while I basically made the DTF performance tests record their performance results by appending to existing event files and then outputting at the end of the PVT execution all of the performance results gathered to a file that could be executed to download all of the chart PNG files and then push those to github to be shown in a wiki page.</p>
+</li>
+</ul>
+
+<p>There are still a few things that need some cleaning up in terms of polish and also I would like to include the DVT (Deployment Verification Tests) to this automated testing but for now I am quite happy with how easily I can validate my changes to DTF do not break anything in an unpredictable manner.</p></div>
+             </article>
+             <hr/>
+             <div id="disqus_thread"></div>
+             <script type="text/javascript">
+                    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                    var disqus_shortname = 'rodneyscorner'; // required: replace example with your forum shortname
+
+                    /* * * DON'T EDIT BELOW THIS LINE * * */
+                    (function() {
+                        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                    })();
+              </script>
+              <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+              <a href="http://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a>
+          </div>
+          <div class="span4">
+            
+                <h2>Related Posts</h2>
+                <ul>
+                    
+                    <li><a href="/work/java/dtf/2011/01/28/23.00-new-generated-documentation-look-for-dtf.html">New look and feel for DTF documentation</a></li>
+                    
+                    <li><a href="/work/java/dtf/2011/01/17/13.00-introducing-dtf.html">Introducing DTF</a></li>
+                    
+                    <li><a href="/work/java/language/2011/12/30/17.12-Tuning-the-Java-garbage-collector.html">Tuning the Java Garbage Collector</a></li>
+                    
+                    <li><a href="/work/java/android/2011/03/09/21.00-android-development-and-ant.html">Android Development and Ant</a></li>
+                    
+                    <li><a href="/work/java/eclipse/2011/03/06/13.00-fixing-eclipse-content-assist.html">Fixing Eclipse Content Assist</a></li>
+                    
+                </ul>
+            
+          </div>
+        </div>
+      </div>
+      <footer>
+        <div style="text-align: right">Powered by <a href="http://jekyllrb.com/">Jekyll</a> &amp; <a href="http://twitter.github.com/bootstrap/index.html">Bootstrap</a></div>
+        <div style="text-align: right">Last Updated: Wed May 16 16:16:15 -0700 2012</div>
+      </footer>
+    </div> <!-- /container -->
+</html>

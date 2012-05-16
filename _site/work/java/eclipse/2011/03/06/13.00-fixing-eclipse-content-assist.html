@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Fixing Eclipse Content Assist</title>
+        <meta name="description" content="Rodney's Blog">
+        <meta name="author" content="Rodney Gomes">
+
+        <link rel="alternate"
+              type="application/rss+xml"
+              title="Rodney's Corner RSS Feed"
+              href="http://feeds.feedburner.com/rlgomesgithubcom/feed"/>
+
+        <link href="/css/bootstrap.css" rel="stylesheet">
+        <link href="/css/main.css" rel="stylesheet"/>
+    </head>
+    <body>
+
+    <div class="topbar">
+      <div class="fill">
+        <div class="container">
+          <a class="brand" href="/">Rodney's Corner</a>
+          <ul class="nav">
+            <li class="active"><a href="/">Blog</a></li>
+            <li><a href="/archive.html">Archive</a></li>
+            <li><a href="/about.html">About</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="content">
+        <div class="page-header">
+          <h1>Fixing Eclipse Content Assist</h1>
+        </div>
+        <div class="row">
+          <div class="span10">
+             <article>
+                   <div id="post.body"><p>If you use eclipse like I do for developing anything form Python scripts to Android projects you may have noticed that recently your content assist feature is either really slow or literally freezes up eclipse. Well you&#8217;re in luck because the reason its most likely doing this is because of the ADT Plugin that you&#8217;re using to do Android development.</p>
+
+<p>So it seems there are a few bugs open on the subject but put simply the content assist tries to look for the Android source code under each of the Android folders at <em>sdk_location/platforms/android-x</em> (where x is the android level). When the content assist can&#8217;t find the <em>sources</em> folder then it just goes nuts and wastes alot of cpu cycles, the easy fix is to create a simple <em>sources</em> folder under each of those <em>android-x</em> folders and your content assist will be back to behaving as usual.</p>
+
+<p>The longer and less easy fix is to download the source for each of those builds and place it there, but I really don&#8217;t think the majority of developers care for all of the source code.</p></div>
+             </article>
+             <hr/>
+             <div id="disqus_thread"></div>
+             <script type="text/javascript">
+                    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                    var disqus_shortname = 'rodneyscorner'; // required: replace example with your forum shortname
+
+                    /* * * DON'T EDIT BELOW THIS LINE * * */
+                    (function() {
+                        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                    })();
+              </script>
+              <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+              <a href="http://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a>
+          </div>
+          <div class="span4">
+            
+                <h2>Related Posts</h2>
+                <ul>
+                    
+                    <li><a href="/work/java/language/2011/12/30/17.12-Tuning-the-Java-garbage-collector.html">Tuning the Java Garbage Collector</a></li>
+                    
+                    <li><a href="/work/java/android/2011/03/09/21.00-android-development-and-ant.html">Android Development and Ant</a></li>
+                    
+                    <li><a href="/work/java/dtf/2011/01/28/23.00-new-generated-documentation-look-for-dtf.html">New look and feel for DTF documentation</a></li>
+                    
+                    <li><a href="/work/java/dtf/2011/01/17/16.00-continuous-integration-environment-for-dtf.html">Continuous Integration Environment for DTF</a></li>
+                    
+                    <li><a href="/work/java/dtf/2011/01/17/13.00-introducing-dtf.html">Introducing DTF</a></li>
+                    
+                </ul>
+            
+          </div>
+        </div>
+      </div>
+      <footer>
+        <div style="text-align: right">Powered by <a href="http://jekyllrb.com/">Jekyll</a> &amp; <a href="http://twitter.github.com/bootstrap/index.html">Bootstrap</a></div>
+        <div style="text-align: right">Last Updated: Wed May 16 16:16:15 -0700 2012</div>
+      </footer>
+    </div> <!-- /container -->
+</html>
