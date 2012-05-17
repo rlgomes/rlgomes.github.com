@@ -7,10 +7,21 @@ title: Rodney's Corner
     <h2>Recent Posts</h2>
     <table>
        {% for post in site.posts limit:10 %}
-       <tr>
-           <td nowrap="nowrap"><span>{{ post.date | date_to_string }}</span></td>
+       <tr class="linkable" onclick="javascript:document.location.href='{{ post.url }}';">
+           <td style="text-align: center; max-width: 100px;" nowrap="nowrap">
+            <span>{{ post.date | date_to_string }}</span>
+           </td>
            <td nowrap="nowrap"><b>&raquo;</b></td>
-           <td nowrap="nowrap"><a class="postlink" href="{{ post.url }}">{{ post.title }}</a></h2></td>
+           <td nowrap="nowrap">
+           <a class="postlink" href="{{ post.url }}">{{ post.title }}</a>
+           </td>
+           <td style="text-align: right;">
+            {% for category in post.categories %}
+                {% if category != 'work' %}
+                    <span style="color: gray;">{{ category }} </span>
+                {% endif %}
+            {% endfor %}
+           </td>
        </tr>
        {% endfor %}
        <tr>
