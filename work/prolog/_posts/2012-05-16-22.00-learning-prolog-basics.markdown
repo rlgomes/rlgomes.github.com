@@ -1,0 +1,209 @@
+---
+layout: post
+title: Learning Prolog basics
+published: true
+categories: [prolog, development, logic]
+---
+
+I wanted to review my prolog skills an at the same time write up a quick set of
+posts on how to use Prolog to get certain tasks done in a more efficient manner.
+This first post is about going over how you write a basic Prolog program and
+how to wrap your mind around this "different" programming paradigm.
+
+Prolog is a logic programming language based that uses facts and rules to
+evaluate if what you are trying to compute is true or false logically. These
+facts and rules are loaded into what is usually called the **Prolog** database
+and then you can query them in order to get the answers to the questions that
+you want to solve. The most basic thing you can define in prolog is a fact and
+a fact has the form:
+
+{% highlight prolog %}
+fact(atom).
+{% endhighlight %}
+
+A fact can be just a simple name followed by the open and closing parenthesis or
+it can include arguments which are actually called atoms. To understand better
+an atom is a general purpose name used to identify elements and is represented
+by a lower case sequence of characters. For example lets say we wanted to
+expression that rodney is a human being. The fact for such a thing in **Prolog**
+could be written like so:
+
+{% highlight prolog %}
+human(rodney).
+{% endhighlight %}
+
+The above is also equivalente to "human(rodney) :- true.". Now, lets fire up the
+gnu prolog interpreter and load the file that contains the above fact, like so:
+
+<console>
+> prolog
+GNU Prolog 1.3.0
+By Daniel Diaz
+Copyright (C) 1999-2007 Daniel Diaz
+| ?- [basics].
+compiling /home/rlgomes/workspace/prolog/prolog_basics/basics.pl for byte code...
+/home/rlgomes/workspace/prolog/prolog_basics/basics.pl compiled, 5 lines read - 413 bytes written, 4 ms
+
+(4 ms) yes
+| ?-
+</console>
+
+Loading the file is done with the usage of the square brackets surrounding the
+name of the file that has a **.pl** extension. Once loaded you can query the
+**Prolog** engine by writing a rule and verify if it matches something in the
+**Prolog** database, like so:
+
+<console>
+| ?- human(rick).
+
+no
+</console>
+
+Here you can see for the first time how the **Prolog** interpreter responds with
+**no** in order to tell you that it does not know if 'rick' is human. So we can
+also query the engine for truthful facts like so:
+
+<console>
+| ?- human(rodney).
+
+yes
+</console>
+
+Facts are interesting and the basis of everything that is known to be true
+within a **Prolog** engine but the really interesting part is when you start
+writing rules. A rule is a very similar predicate construction that uses
+variables to match other values in order to evaluate to a truthful statement. So
+for example lets define a rule that says that all humans are mortals, like so:
+
+{% highlight prolog %}
+mortal(X) :- human(X).
+{% endhighlight %}
+
+The above rule is read "X is mortal if X is human" and is a very simple rule
+that you can use just as before to validate that "mortal(rodney)." and you'll
+get the response **yes**. We can make a more interesting program with the few
+things we've learned so far and lets just jump into the program below:
+
+{% highlight prolog %}
+
+% samantha is alice's mother
+mother(samantha, alice).
+mother(samantha, bob).
+
+% joe is alice's father
+father(joe, alice).
+father(joe, bob).
+father(joseph, joe).
+
+% X is sibling of Y if father X has father Z and Y has father Z
+siblings(X, Y) :- father(Z, X), father(Z, Y).
+
+grandparent(X, Y) :- father(X, Z), father(Z, Y).
+grandparent(X, Y) :- mother(X, Z), father(Z, Y).
+grandparent(X, Y) :- father(X, Z), mother(Z, Y).
+grandparent(X, Y) :- mother(X, Z), mother(Z, Y).
+{% endhighlight %}
+
+This short program can now easily validate very easily if people are siblings or
+if someone is someone's grandparent. You can see how to create multiple rules to
+validate the same general predicate but defining the various variations that
+would make that predicate true. Lets see how quickly we can verify if the
+various people are related.
+
+<console>
+| ?- siblings(alice, joe).
+
+no
+| ?- siblings(alice, bob).
+
+true ?
+
+yes
+</console>
+
+You may have noticed that when verifying that alice and bob were siblings you
+got a slightly different prompt. This new prompt identifies that there is one
+way to verify that alice and bob are siblings and if you hit just enter you
+don't have any interest in additional solutiosn but if you hit ';' followed by
+enter the **Prolog** engine will try to verify alternate ways of evaluating that
+alice and bob are siblings. We'll go into more details on the alternate routes
+to verify the same predicate in future posts.
+
+Lets make a quick introduction into lists and how **Prolog** represents and uses
+them and then we'll leave until the next post to get into more complex parts of
+**Prolog**. Now lists are represented in a very easy to understand manner like
+so:
+
+{% highlight prolog %}
+A=[1,2,3].
+{% endhighlight %}
+
+The above will evaluate on the interpreter to truth but doesn't serve any
+purpose in a **Prolog** file. We can now talk about how to use lists within
+**Prolog** predicates and basically take a list apart. When specifying a list in
+a new rule we can separate the current head of the list for the rest of the list
+like so:
+
+{% highlight prolog %}
+some_rule_over_lists([H | T]) :- true.
+{% endhighlight %}
+
+Once again the above doesn't serve any purpose but just introduces you to the
+notion of processing a list with a **Prolog** rule. Now if we wanted to write
+a function to calculate the length of a list we can't really return a value so
+what needs to be done is you need your "length" function to actually have a
+second argument which would house the result. So we'd define length like so:
+
+{% highlight prolog %}
+len([], 0).
+len([_|T], N) :- len(T,NT), N is NT + 1.
+{% endhighlight %}
+
+This last implementation has quite a few new things in it so lets start by
+explaining that when defining any rules that operate over lists you usually have
+the predicate that handles the empty list **\[\]** and the predicate that handles a
+list with a head and tail, like so **\[H|T\]**. This is a very common pattern for
+recursive functions over lists and is used all the time when handling lists in
+**Prolog**. We are also introducing how to do arithmetic in **Prolog** using the
+**is** statement to attribute to **N** the value of calculating the length of
+the tail **T** plus 1. I also decided to introduce the anonymous variable **\_**
+because you will get a warning about **H** not being used whenever you have
+things that are matched but not used to calculate anything of importance.
+
+You can use the previously defined **len** function like so:
+
+<console>> prolog
+GNU Prolog 1.3.0
+By Daniel Diaz
+Copyright (C) 1999-2007 Daniel Diaz
+| ?- consult(basics).
+compiling /home/rlgomes/workspace/prolog/prolog_basics/basics.pl for byte code...
+/home/rlgomes/workspace/prolog/prolog_basics/basics.pl:7: warning: singleton variables [H,T] for blah/1
+/home/rlgomes/workspace/prolog/prolog_basics/basics.pl compiled, 10 lines read - 1033 bytes written, 10 ms
+
+(4 ms) yes
+| ?- len([a,b,c,d,e,f,g,h,i,j], L).
+
+L = 10
+
+yes
+| ?-
+</console>
+
+I would advise you to go and play with the interpreter and defining other
+**Prolog** functions such as:
+
+   * **sum** function that can sum up the elements in a list of numbers, with
+     the syntax **sum(\[1,2,3,4,5\], S)** and returns the sum in the variable
+     **S**.
+
+   * replace function which given a list of elements replaces a specific element
+     in the list with another element specified and as before the result should
+     be the last argument in your function. Start with the definition for your
+     function like so **replace(List, Element, Replacement, NewList)** and you
+     should be able to write that up with a little effort.
+
+In the following post I will be looking at the built in functions and how to
+assert and retract facts from the **Prolog** database.
+
+
