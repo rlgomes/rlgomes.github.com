@@ -1,8 +1,8 @@
 ---
-layout: post
-title: Learning Prolog basics
-published: true
-categories: [prolog, development, logic]
+layout : post
+title : Learning Prolog basics
+published : true
+tags : [prolog, development, logic]
 ---
 
 I wanted to review my prolog skills an at the same time write up a quick set of

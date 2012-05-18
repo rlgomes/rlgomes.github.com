@@ -2,7 +2,7 @@
 layout: post
 title: Haskell Basics
 published: true
-categories: [haskell, functional programming]
+tags: [haskell, functional programming]
 ---
 
 I will start my learning of Haskell by first going over how to write a simple

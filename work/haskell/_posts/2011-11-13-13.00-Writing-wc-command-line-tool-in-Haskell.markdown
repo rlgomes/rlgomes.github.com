@@ -2,7 +2,7 @@
 layout: post
 title: Writing wc command line tool in Haskell
 published: true
-categories: [haskell,tools,unix]
+tags: [haskell, tools, unix]
 ---
 
 Now after having gotten a pretty good overview of how to use Haskell's most

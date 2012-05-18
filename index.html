@@ -15,13 +15,6 @@ title: Rodney's Corner
            <td nowrap="nowrap">
            <a class="postlink" href="{{ post.url }}">{{ post.title }}</a>
            </td>
-           <td style="text-align: right;">
-            {% for category in post.categories %}
-                {% if category != 'work' %}
-                    <span style="color: gray;">{{ category }} </span>
-                {% endif %}
-            {% endfor %}
-           </td>
        </tr>
        {% endfor %}
        <tr>

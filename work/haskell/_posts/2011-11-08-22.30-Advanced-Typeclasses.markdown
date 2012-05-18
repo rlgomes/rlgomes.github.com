@@ -2,7 +2,7 @@
 layout: post
 title: Advanced Typeclasses
 published: true
-categories: [haskell,functional programming]
+tags: [haskell, functional programming]
 ---
 
 Lets go back a bit to the typeclass topic and analye and understand well a few

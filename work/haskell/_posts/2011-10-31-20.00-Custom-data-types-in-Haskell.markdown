@@ -2,7 +2,7 @@
 layout: post
 title: Custom data types in Haskell
 published: true
-categories: [haskell,tutorial,data types]
+tags: [haskell, data types]
 ---
 
 Hopefully after the first post in this series you can quickly write up simple
@@ -24,7 +24,7 @@ Which represents the Tree:
 
 <pre>
       2
-     / \ 
+     / \
     /   \
    1     3
   / \   / \
@@ -39,18 +39,18 @@ Node x y z, like so:
 {% highlight hs %}
 maxdepth :: Tree a -> Int
 maxdepth Leaf = 0
-maxdepth (Node _ l r) = 1 + max (maxdepth l) (maxdepth r) 
+maxdepth (Node _ l r) = 1 + max (maxdepth l) (maxdepth r)
 {% endhighlight %}
 
-As you can see pattern matching on your custom data type is extremely easy to 
+As you can see pattern matching on your custom data type is extremely easy to
 read and is just like doing so with any built in type. We introduced the use of
 the _ variable which is how you handle variables when you don't care to use them
-in your functions calculations. We're using the **max** function from 
-**Prelude** to handle calculating the maximum of those two possible choices in 
+in your functions calculations. We're using the **max** function from
+**Prelude** to handle calculating the maximum of those two possible choices in
 a **Tree**.
 
-Lets look at how to print an existing tree with in Haskell. So firstly if you 
-try to just show the current **sampleTree** you'll find that ghci shell will 
+Lets look at how to print an existing tree with in Haskell. So firstly if you
+try to just show the current **sampleTree** you'll find that ghci shell will
 actually complain it can't show this new element:
 
 <console>
@@ -60,7 +60,7 @@ Possible fix: add an instance declaration for (Show (Tree Integer))
 In a stmt of an interactive GHCi command: print it
 </console>
 
-The above error is basically trying to tell you that Haskell doesn't know 
+The above error is basically trying to tell you that Haskell doesn't know
 how to "show" the data type you just created. One easy thing to do is to just
 let Haskell derive a basic representation for your type by adding the following
 to the declaration of the type:
@@ -78,7 +78,7 @@ Node 1 (Node 2 Leaf Leaf) (Node 3 (Node 4 Leaf Leaf) Leaf)
 </console>
 
 But you can also define exactly how you'd like to represent your trees. This is
-done by defining an instance of the class Show for your datatype and then 
+done by defining an instance of the class Show for your datatype and then
 defining the function **show** for your type, something like so:
 
 {% highlight hs %}
@@ -88,8 +88,8 @@ padding n = " " ++ padding(n-1)
 
 showTree :: (Show a, Num b) => Tree a -> b -> String
 showTree Leaf n = (padding n) ++ "."
-showTree (Node a l r ) n = let showl = showTree l (n+4) in 
-                           let showr = showTree r (n+4) in 
+showTree (Node a l r ) n = let showl = showTree l (n+4) in
+                           let showr = showTree r (n+4) in
                            let showc = (padding n) ++ (show a) in
                            showc ++ "\n" ++ showl ++ "\n" ++ showr
 
@@ -97,18 +97,18 @@ instance (Show a) => Show (Tree a) where
     show a = showTree a 0
 {% endhighlight %}
 
-I've introduced here the concept of typeclasses, they are heavily used in 
-conjunction with polymorphism to better describe the type of elements that can 
+I've introduced here the concept of typeclasses, they are heavily used in
+conjunction with polymorphism to better describe the type of elements that can
 be used with the current function. Typeclasses seem like class definitions
 but they're much more powerful in the sense that you are defining an abstract
 operation that needs to be defined per type that wants to be usable by certain
-functions. In the code above you'll notice how the **padding** function is 
-expressing that it can accept any **a** as long as its an implementation of the 
-typeclass **Num**. 
+functions. In the code above you'll notice how the **padding** function is
+expressing that it can accept any **a** as long as its an implementation of the
+typeclass **Num**.
 
 Basically you're telling Haskell that to **show** a **Tree a** type you want
-Haskell to represent it in the manner a specific manner by giving Haskell the 
-definition of the **show** function you'd rather use. Now when we try to 
+Haskell to represent it in the manner a specific manner by giving Haskell the
+definition of the **show** function you'd rather use. Now when we try to
 reference our **sampleTree** you'll get a more readable representation like so:
 
 <console>
@@ -125,11 +125,11 @@ Main> sampleTree
 </console>
 
 If we wanted we could even extend this **show** implementation to draw a few
-ASCII lines and make the tree a bit easier to read. We'll leave that as an 
+ASCII lines and make the tree a bit easier to read. We'll leave that as an
 exercise for the reader.
 
-Lets find something more interesting function to write and we'll start by 
-writing up a **insert** function takes a Tree and an element and inserts the 
+Lets find something more interesting function to write and we'll start by
+writing up a **insert** function takes a Tree and an element and inserts the
 Tree with the new element inserted while at least making sure that the nodes
 are in order in the tree so that if we print the tree in order it will print the
 elements in order
@@ -164,7 +164,7 @@ class  (Eq a) => Ord a  where
     x >  y           =  compare x y == GT
 
 -- note that (min x y, max x y) = (x,y) or (y,x)
-    max x y 
+    max x y
          | x >= y    =  x
          | otherwise =  y
     min x y
@@ -174,7 +174,7 @@ class  (Eq a) => Ord a  where
 {% endhighlight %}
 
 Basically the definition tells you that defining the **compare** function is
-enough to for the other functions be inferred from.  
+enough to for the other functions be inferred from.
 
 One last thing about defining data types is the ability to create synonyms for
 existing types. This is done using the **type** keyword and allows you to make

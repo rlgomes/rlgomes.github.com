@@ -2,7 +2,7 @@
 layout: post
 title: Optimizing Haskell Programs
 published: true
-categories: [haskell,optimization,analysis,performance]
+tags: [haskell, optimization, analysis, performance]
 ---
 
 Before we start optimizing the **wc** command line tool we wrote lets first find

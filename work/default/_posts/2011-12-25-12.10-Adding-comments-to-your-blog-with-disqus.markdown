@@ -2,7 +2,7 @@
 layout: post
 title: Adding comments to your blog with disqus
 published: true
-categories: [blog,comments]
+tags: [blog, comments]
 ---
 
 This is just a quick write up on how easy it is to add comments to your blog or

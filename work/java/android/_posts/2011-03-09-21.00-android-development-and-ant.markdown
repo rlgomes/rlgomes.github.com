@@ -2,7 +2,7 @@
 layout: post
 title: Android Development and Ant
 published: true
-categories: [android, ant, development]
+tags: [android, ant, development]
 ---
 
 When thinking about automatiing the building/testing of an Android project I ran

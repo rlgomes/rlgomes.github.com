@@ -2,7 +2,7 @@
 layout: post
 title: Tuning the Java Garbage Collector
 published: true
-categories: [java,gc,tuning]
+tags: [java, gc, tuning]
 ---
 
 Recently, I've found a few situations where when writing a prototype for

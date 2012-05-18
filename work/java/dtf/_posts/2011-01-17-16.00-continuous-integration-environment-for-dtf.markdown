@@ -2,7 +2,7 @@
 layout: post
 title: Continuous Integration Environment for DTF
 published: true
-categories: [dtf, testing, ci, ec2]
+tags: [dtf, testing, ci, ec2]
 ---
 
 I've been working on building a CI environment for DTF for a while now and I'm

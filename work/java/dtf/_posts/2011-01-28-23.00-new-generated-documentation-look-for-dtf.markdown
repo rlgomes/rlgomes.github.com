@@ -2,7 +2,7 @@
 layout: post
 title: New look and feel for DTF documentation
 published: true
-categories: [dtf, testing, css, html]
+tags: [dtf, testing, css, html]
 ---
 
 Spent sometime cleaning up the way I generate DTF documentation so that it

@@ -2,6 +2,7 @@
 layout: post
 title: Now powered by bootstrap now
 published: true
+tags: [personal]
 ---
 
 Finally decided the blog required a more professional and better look & feel to
