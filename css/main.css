@@ -12,6 +12,10 @@ console {
     display: block;
 }
 
+code {
+	padding: 0px;
+}
+
 p {
 	text-align: justify;
 	font-size: 14px;

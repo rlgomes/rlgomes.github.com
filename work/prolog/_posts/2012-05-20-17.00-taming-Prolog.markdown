@@ -1,0 +1,135 @@
+---
+layout: post
+title: Taming Prolog
+published: true
+tags: [prolog, development, logic]
+---
+
+In this post I'd really like to go over how **Prolog** executes your predicates
+and how you can control how this execution is handled. Lets start with another
+predicate that we can trace its flow and see how **Prolog** executes a predicate
+with multiple ramifications. Lets pick a simple predicate that can validate if
+given **Term1,Term2 and Term3** if **Term3** is the minimum of the two.
+
+{% highlight prolog %}
+minimum(X, Y, X):- X =< Y.
+minimum(X, Y, Y):- X > Y.
+{% endhighlight %}
+
+Now when we trace the execution of lets say **minimum(1,2,X)** we are expecting
+the answer that **X=1** and then we'd be done, but here is what we get when
+tracing and allowing the system to give us all the available options:
+
+<console>
+| ?- minimum(1,2,X).
+      1    1  Call: minimum(1,2,_16) ?
+      2    2  Call: 1=&lt;2 ?
+      2    2  Exit: 1=&lt;2 ?
+      1    1  Exit: minimum(1,2,1) ?
+
+X = 1 ? ;
+      1    1  Redo: minimum(1,2,1) ?
+      2    2  Call: 1&gt;2 ?
+      2    2  Fail: 1&gt;2 ?
+      1    1  Fail: minimum(1,2,_16) ?
+
+no
+</console>
+
+We know for a fact that as soon as you validate that 1 is the minimum of those
+terms that there is no reason to **backtrack** and try the other rule since it
+would logically be false and you could no longer find any solutions that would
+be valid. In **Prolog** you are able to tell the engine to not **backtrack**
+any longer by using a **cut** which is the operator **!** and for the previous
+predicate it would be used like so:
+
+{% highlight prolog %}
+minimum(X, Y, X):- X =< Y, !.
+minimum(X, Y, Y):- X > Y.
+{% endhighlight %}
+
+Now if you trace this you'll see that as soon as **Prolog** reaches the **cut**
+it will stop searching for other solutions, like so:
+
+<console>
+| ?- minimum(1,2,X).
+      1    1  Call: minimum(1,2,_17) ?
+      2    2  Call: 1=&lt;2 ?
+      2    2  Exit: 1=&lt;2 ?
+      1    1  Exit: minimum(1,2,1) ?
+
+X = 1
+
+yes
+</console>
+
+This may not seem like a big deal right now but as we show more complicated
+predicates you'll find that this could meant the difference between executing a
+rule in linear time vs exponential time due to the fact that **Prolog** attempts
+to exhaust all possible solutions for a given predicate.
+
+You'll find that cut can be heard to understand but as you trace your code and
+see situations where **Prolog** is wasting time by doing backtracking and
+attempting to match on other rules that would never work you'll realize that a
+simple placement of the appropriate **cut** can speed up the execution of your
+**Prolog** predicates.
+
+Lets try to cover another interesting feature in **Prolog** which is the ability
+to add new predicates to your running database or remove existing ones. Which
+means you can now make your predicates dynamic and really get some interesting
+things done in **Prolog**. The 2 predicates used are **asserta/1** and
+**retrace/1** which respectively add and reomove the specified term from the
+**Prolog** database. Lets look at how you'd define the fibonacci function in
+**Prolog**:
+
+{% highlight prolog %}
+fib(0,0).
+fib(1,1).
+fib(N,F) :- N1 is N-1,
+            N2 is N1-1,
+            fib(N1,F1),
+            fib(N2,F2),
+            F is F1 + F2.
+{% endhighlight %}
+
+Now to execute the above with large numbers you may need to tweak your global
+and local stack to something higher. The simplest way is by setting the
+environment variables: LOCALSZ and GLOBALSZ to something higher like so:
+
+<console>
+export LOCALSZ=131072
+export GLOBALSZ=131072
+</console>
+
+With the above settings if you start executing our fibonacci example with
+numbers from 1 to 25 you'll notice that the execution time starts to increase
+quite quickly and also the stack size would need to be further made larger to
+be able to calculate the fibnacci of 100. Well the good thing is that we just
+learned about **asserta/1** and can basically use the **Prolog** database to
+**memoize** previous results. This is what the new solution could look like and
+this solution can now calculate fibonacci of 100 without any issues:
+
+{% highlight prolog %}
+:-dynamic(fib/2).
+fib(0,0).
+fib(1,1).
+fib(N,F) :- N1 is N-1,
+            N2 is N1-1,
+            fib(N1,F1),
+            fib(N2,F2),
+            F is F1 + F2,
+            asserta(fib(N,F)).
+{% endhighlight %}
+
+The **dynamic** predicate call is required in order to tell **Prolog** that the
+**fib/2** predicate can be dynamically modified. The other small change was to
+basically **memoize** the **fib(N,F)** so it wouldn't be recalculated on every
+subsequent call.
+
+There's a lot you can do with **cut** and being able to **assert** and
+**retract** from the **Prolog** database and I believe you should go and
+experiment with the newly found features of **Prolog** so you can become learn
+better how they work.
+
+
+
