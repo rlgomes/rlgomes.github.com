@@ -1,0 +1,364 @@
+---
+layout: post
+title: Prolog and Graphs
+published: true
+tags: [prolog, development, logic]
+---
+
+There are a few things we've shown that **Prolog** can do better than other
+languages and now we're going to show you a data structure that can be very
+easily represented in **Prolog** and for which you can very easily define
+traversal methods that do things that in other languages would take hundreds
+of lines of code and a lot of testing.
+
+So lets say we wanted to represent the following graph:
+
+{% highlight prolog %}
+%  a --- b --- e
+%   \         /
+%    \       /
+%     c --- d --- f
+%            \
+%             \
+%              g
+{% endhighlight %}
+
+We could represent the above using the following facts in **Prolog**:
+
+{% highlight prolog %}
+path(a,b).
+path(b,e).
+path(a,c).
+path(c,d).
+path(e,d).
+path(d,f).
+path(d,g).
+{% endhighlight %}
+
+Now all we need is to define a simple predicate that can calculate paths by
+composition of existing paths. For example if X is connected to Z and Z is
+connected to Y then there is a path betwen X and Y, which is **Prolog** is
+very similar to the sentence we just wrote:
+
+{% highlight prolog %}
+path(X,Y) :-path(X,Z), path(Z,Y).
+{% endhighlight %}
+
+With that predicate we can now ask **Prolog** a few different questions:
+
+<console>
+| ?- [graphs_v1].
+...
+
+yes
+| ?- path(a,b).
+
+true ?
+
+yes
+| ?- path(a,e).
+
+true ?
+
+yes
+| ?- path(a,x).
+
+Fatal Error: local stack overflow (size: 8192 Kb, environment variable used: LOCALSZ)
+</console>
+
+Oh shoot, seems when we ask for a path that can't be solved that we run out of
+stack space. This is because we don't have a termination rule and **Prolog**
+keeps instantiating variables for Z that it can then match on a longer sequence
+of **path** facts until it runs out of stack space. The easiest way to solve this
+is to make sure that when we start on a path to look for Z that connects X and Y
+that we simply validate that both X and Y are valid **atoms** and not variables.
+Which would look like so:
+
+{% highlight prolog %}
+path(a,b).
+path(b,e).
+path(a,c).
+path(c,d).
+path(e,d).
+path(d,f).
+path(d,g).
+
+path(X,Y) :- atom(X), atom(Y), path(X,Z), path(Z,Y).
+{% endhighlight %}
+
+This now works as desired but presents a small problem which is that we can't
+query **Prolog** for all of the nodes we can reach from a, like so:
+
+<console>
+| ?- findall(X, path(a,X), List).
+
+List = [b,c]
+
+yes
+| ?-
+</console>
+
+We'd really like the answer to be **\[b,c,d,e,f,g\]** and for that we're going
+to have to find a way to change our solution so that we don't stack overflow and
+still be able to calculate all of the reachable nodes for a given node. Now part
+of the problem is that we don't have a predicate for validating a path with a
+different name from the fact that represents the edge between two nodes. So we
+really need to fix this by naming these two things differently, like so:
+
+{% highlight prolog %}
+edge(a,b).
+edge(b,e).
+edge(a,c).
+edge(c,d).
+edge(e,d).
+edge(d,f).
+edge(d,g).
+{% endhighlight %}
+
+Now the path method can be defined as finding an edge between X and Y directly
+or finding an edge between X and Z and a path between Z and Y, something like
+the following:
+
+{% highlight prolog %}
+path(X,Y) :- edge(X,Y).
+path(X,Y) :- edge(X,Z), path(Z,Y).
+{% endhighlight %}
+
+The nice thing is that now our function behaves beautifully and even avoids
+overflowing the stack, but results in a few duplicate entries when requesting
+all the paths from **a** to all other nodes:
+
+<console>
+| ?- findall(X, path(a,X), List).
+
+List = [b,c,e,d,f,g,d,f,g]
+
+yes
+</console>
+
+Removing the duplicates is quite easy with the **setof/2** predicate which does
+the same as the **findall** predicate but without duplicates in the resulting
+set, like so:
+
+<console>
+| ?- setof(X, path(a,X), List).
+
+List = [b,c,d,e,f,g]
+
+yes
+</console>
+
+Everything so far is working well because the paths are unidirectional and we
+don't have any cycles that would give us troubles. Lets just create a simple
+edge from **g** back to **d**. Now when we run a simple **path(g,f)** you'll
+notice it doens't run out of solutions because it keeps identifying a new path
+between **g** and **d** that involves going through the **g** or **d** again. To
+fix this issue we'll have to use a **visited** list and keep track of visited
+nodes, like so:
+
+{% highlight prolog %}
+edge(a,b).
+edge(b,e).
+edge(a,c).
+edge(c,d).
+edge(e,d).
+edge(d,f).
+edge(d,g).
+edge(g,d).
+
+path(X, Y) :- path(X,Y,[]).
+
+path(X, Y, _) :- edge(X,Y).
+path(X, Y, V) :- \+ member(X, V), edge(X, Z), path(Z, Y, [X|V]).
+{% endhighlight %}
+
+The previous solution now handles cycles just fine and can still be used with
+the **findall** and **setof** predicates. Lets complicate the graph by adding
+weights for each of the connections and then having **Prolog** calculate which
+is the quickest path between two nodes. So lets show you how to represent the
+weights in the graph quite easily and then also show you how to find a path
+through two nodes and calculate the weight of traveling that path as well as
+the path traveled. Lets start with representing weights in the edges between
+the nodes, like so:
+
+{% highlight prolog %}
+%
+%  a -1- b -2- e
+%   \         /
+%   3        3
+%    \       /
+%     c -2- d -2- f
+%            \
+%            3
+%             \
+%              g
+%
+
+edge(a,b,1).
+edge(b,e,2).
+edge(a,c,3).
+edge(c,d,2).
+edge(e,d,3).
+edge(d,f,2).
+edge(d,g,3).
+{% endhighlight %}
+
+I've also represented our test graph using an ASCII format that can be easily
+understood with the weights of traveling those paths. If we now want to calculate
+all of the possible paths and then evaluate which is the best path then we need
+to think of solving two problems separately. First is how do we find all the
+paths between node **X** and node **Y** and the second is how do we pick the
+minimal path. The first question we'll solve using the predicate **findapath**
+which can be expressed as such:
+
+* findapath between **X** and **Y** has weight **W** if there is an **edge**
+  between **X** and **Y** of weight **W**.
+
+* else findapath between **X** and **Y** of weight **W** is true if we can
+  find a path between **X** and **Z** of weight **W1** and there is a **findapath**
+  between **Z** and **Y** of weight **W2** where **W** is **W1** + **W2**.
+
+**Note** the above is missing a check that we haven't already visited the **X**
+while doing subsequent matches on the 2nd rule of the **findapath** predicate
+in order to avoid running forever on a cycle.
+
+With the above rules our **findapath** predicate may look like so:
+
+{% highlight prolog %}
+findapath(X, Y, W, [X,Y], _) :- edge(X, Y, W).
+findapath(X, Y, W, [X|P], V) :- \+ member(X, V),
+                                 edge(X, Z, W1),
+                                 findapath(Z, Y, W2, P, [X|V]),
+                                 W is W1 + W2.
+{% endhighlight %}
+
+The above predicate is a bit more complciated since we're calculating the weight
+and also tracking the exact path we followed till we find the route all the way
+to the **Y** node. With the above predicate you can query with lets say the path
+between **a** and **g** and if you ask **Prolog** to give you other solutions
+with the **;** character you can get the following:
+
+<console>
+| ?- findapath(a,g,Weight,Path,[]).
+
+Path = [a,b,e,d,g]
+Weight = 9 ? ;
+
+Path = [a,c,d,g]
+Weight = 8 ? ;
+
+no
+</console>
+
+So **Prolog** is capable of finding the two paths that lead from **a** to **g**
+and to also tell us there is no other possible paths aside from the two already
+calculated.
+
+We now need to write a function that has a similar design pattern to that of the
+already used **findall** and **setof** predicates. In which, we attempt to find
+all the solutions for a given **Goal** but in the process we also pick from each
+subsequent solution the best one and save that to return at the end. The design
+pattern used for writing a **findall** is something similar to the following:
+
+{% highlight prolog %}
+findall(X, Goal, Xlist) :- call( Goal),
+                           assertz(queue(X)),
+                           fail.
+
+findall(_, _, XList) :- assertz(queue(bottom)),
+                        collect(Xlist).
+
+collect(L) :- retract(queue(bottom)), !, L = [].
+collect(L) :- retract(queue(X)), !, L = [X|Rest], collect(Rest).
+{% endhighlight %}
+
+This a slightly modified version from what you may find online and I've avoided
+using the **;** operator which is an **else** operator which condenses the
+writing of multiple rules but makes it much harder to read. So the **findall**
+function above can be read:
+
+* For the goal **Goal** we call the **Goal** first and then that instantiates the
+term **X** with its value which we then **assertz** into the **Prolog** database
+and then we **fail** so that **Prolog** will back track and find other solutions
+for our **Goal** (which in turn get asserted into the **Prolog** database).
+
+* Once we've finished satisyfing all of the possible solutions for our **Goal**
+we'll assert one last element into the **Prolog** database that will allow us to
+**collect** the various results with the **collect** predicate.
+
+The **collect** predicate is also quite involed but you just need to understand
+something very simple about how it works: It retracts from the **Prolog**
+database in order from the very first **assertz** to the last fact that we
+asserted called **queue(bottom)** at which point its done collecting all of the
+results required to form the resulting list.
+
+What we're trying to write is a similar predicate but we want to on every newly
+found solution compare to the last best solution and immediately decide which
+one to keep in the **Prolog** database so that we only keep track of 1 solution
+at any given time during the predicates solution (very memory efficient
+solution). Given the definition of the **findall** predicate it isn't that hard
+to get to a solution like so for our **findminpath** predicate:
+
+{% highlight prolog %}
+:-dynamic(solution/2).
+findminpath(X, Y, W, P) :- \+ solution(_, _),
+                           findapath(X, Y, W1, P1, []),
+                           assertz(solution(W1, P1)),
+                           !,
+                           findminpath(X,Y,W,P).
+
+findminpath(X, Y, _, _) :- findapath(X, Y, W1, P1, []),
+                           solution(W2, P2),
+                           W1 < W2,
+                           retract(solution(W2, P2)),
+                           asserta(solution(W1, P1)),
+                           fail.
+
+findminpath(_, _, W, P) :- solution(W,P), retract(solution(W,P)).
+{% endhighlight %}
+
+This is without a doubt one of the most complex predicates we've written to date
+so don't be too worried if you don't get it at first glance. So the first
+rule is there to just populate the **Prolog** database with the first solution
+and then proceed with the underlying multiple solution gathering and comparison
+in order to always leave the best solution in the **Prolog** database which the
+last rule is going to query and retract and return to the user requesting the
+solution.
+
+You can have written this with two rules and in the current 2nd rule you'd create
+a dummy solution like **assertz(solution(100000,\[\]))** which would be
+immediately lose to the first found path and return nothing but that would be a
+lame solution prone to issues such as returning an empty path when there is no
+path between two specified nodes or having issues when you're sum of an existing
+path is more than the magical **100000** that you thought was big enough weight
+that you would never exceed.
+
+You can now use your newly created **findminpath** to easily calculate the best
+path between **a** and **g** and you'd get the expected result of:
+
+<console>
+| ?- findminpath(a,g,W,P).
+
+P = [a,c,d,g]
+W = 8
+</console>
+
+This post has covered quite a few things but I hope the one thing you can take
+away from this post is that **Prolog** can be extremely easy to express certain
+data structures and to also write up certain functions used in every day coding
+requirements that would otherwise take days of careful writing and testing to
+come up with.
+
+An interesting thing I came across that was written using **Prolog** is an
+article on how **IBM** used **Prolog** to do natural language processing for
+their **Jeopardy** winning computer progrm called **Watson**, you can read more
+[here](http://www.cs.nmsu.edu/ALP/2011/03/natural-language-processing-with-prolog-in-the-ibm-watson-system/).
+
+
+
+
+
+
+
+
+

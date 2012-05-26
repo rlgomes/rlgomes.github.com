@@ -130,6 +130,3 @@ There's a lot you can do with **cut** and being able to **assert** and
 **retract** from the **Prolog** database and I believe you should go and
 experiment with the newly found features of **Prolog** so you can become learn
 better how they work.
-
-
-
