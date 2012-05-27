@@ -1,0 +1,352 @@
+---
+layout: post
+title: Using SST and Freshen
+published: true
+categories: [testing, python, cucumber, selenium, web]
+---
+
+I work in the quality assurance field and I've built and used many tools in my
+career to accomplish my every day tasks. I recently had to do some web testing
+(ie **Selenium** appropriate) and had a few requirements a long the lines of not
+just having a development language for testing but a testing language that
+could be used by non coder friendly individuals (ie black box testers or even
+designers as they put together mocks for UI's).
+
+For the web testing aspect I got familiar with **[SST](http://testutils.org/sst/)**
+and since its written in **Python** and couldn't be easier to setup and get
+started I found this to be a great way to driven **Selenium** tests. You should
+check the site out and you'll see how quick and easy you can start writing tests
+and have a full blown acceptance suite up and running within an afternoon.
+
+Now the bigger challenge was what language I would use to allow non coder types
+to write tests quick and effectively and yet be able to automate some of their
+work so that their tests could be integrated into the acceptance testing suite
+and catch issues before shipping and without having tons of black box testing
+done. I started digging around and the first big obvious choice is **Cucumber**
+but I found that its written in **Ruby** and wanting to stick to **Python** and
+its familiar tool chain I searched around for something that would give me the
+same language and be written in **Python**. What I found was
+**[Freshen](https://github.com/rlisagor/freshen)**, a very well done clone of
+the **Ruby Cucumber** language which had even a few special additions to the
+**Cucumber** language which made it even more interesting to use for this type
+of testing.
+
+**Freshen** is very easy to extend and what I wanted to do was to have
+**Freshen** give you a nice and natural way of writing tests that would drive
+the **SST** framework so that you could easily test a web site by people who are
+not strong coders. The first aspect to figure out is that given **Cucumber**
+tests look like so:
+
+{% highlight cucumber %}
+Scenario: Divide regular numbers
+  Given I have entered 3 into the calculator
+  And I have entered 2 into the calculator
+  When I press divide
+  Then the result should be 1.5 on the screen
+{% endhighlight %}
+
+We need to figure out exactly the wording that we wanted to use when doing
+certain actions through **SST** that would allow you as the test writer to
+really trigger the right events and validate the right things have happened and
+while doing this you do want to "hide" certain aspects of the **HTML** content
+such as the exact path to certain elements on the page (maintaining XPath or
+css selector expression is hard enough for developers). So lets pick the main
+**[actions](http://testutils.org/sst/actions.html)** from **SST** that we'd like
+to expose in the **Freshen** language:
+
+* **go_to** - open a specific page in the currently configured browser.
+* **go_back** - hit the back button on the browser.
+* **click_elemnt** - to click on the various interactable elements on the page.
+
+* **assert_title** - validate the title of the page is correct.
+* **assert_link** - validate there is a link to another page on the page.
+* **assert_text** - validate that certain textual elements are on the page.
+
+Let's keep the list to just those for now and as for what we'll test I shall
+pick my blog site which I'd like to make sure is working correctly at any given
+moment and can be correctly navigated by any person using it. We could start
+defining the language for our tests like so:
+
+{% highlight cucumber %}
+Feature: Personal Blog
+
+  Scenario: Visit the main page
+   Given I am at http://localhost:4000
+   Then I should see the title Rodney's Corner
+    And I should see the link Blog, Archive, About
+    And I should see the headers Blog, Recent Posts, Coding
+{% endhighlight %}
+
+That was a first analysis and from that we can see that we need a few different
+ways of validating content on the page. There's still an issue with the way we
+get to the blog by referring to the **url** directly, I'd really prefer if we
+could refer to it by a name (ie alias) that could be maintained in the
+**Python** configuration file and easily modified to point to different testing
+environments. To be able to run the **Freshen** tests you'll need to first make
+yourself a virtualenv (or install on your base sytem if you prefer) and install
+the following:
+
+* pip install -U sst
+* pip install 'git+git://github.com/rlisagor/freshen.git#egg=freshen'
+
+Once you have that installed we can now start defining the **steps** **Python**
+module required to start executing our **Freshen** tests against the blog. We'll
+start by defining the **Given** statement and the first **Then** which are the
+simplest to begin with:
+
+{% highlight python %}
+from sst.actions import *
+from freshen import *
+
+@Given('I am at (.*)')
+def i_am_at(url):
+    go_to(url)
+
+@Then('I should see the title (.*)')
+def should_see_the_title(title):
+    assert_title(title)
+{% endhighlight %}
+
+The previous **steps** implementation allows us to execute a reduced version of
+the previous navigation tests, like so:
+
+{% highlight cucumber %}
+Feature: Personal Blog
+
+  Scenario: Visit the main page
+   Given I am at http://localhost:4000
+   Then I should see the title Rodney's Corner
+{% endhighlight %}
+
+And to run this you can do so using **nosetests** command line tool like so:
+
+<console>
+> nosetests --with-freshen -v
+Personal Blog: Visit the main page ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 2.894s
+
+OK
+</console>
+
+If you'd like to get the output from **SST** just make sure to pass the argument
+**--nocapture** and you'll get the **stdout** output. Lets look into making the
+current steps a bit smarter and easier to maintain in the long run. So the first
+thing is how to replace the exact url with a location alias instead. Any easy
+way of doing this could be like so:
+
+{% highlight python %}
+from sst.actions import *
+from freshen import *
+
+import os
+
+test_env = 'test'
+if 'ENV' in os.environ.keys():
+    test_env = os.environ['ENV']
+
+if test_env == 'test':
+    url_alias = {
+                 'main blog site' : 'http://localhost:4000',
+                }
+elif test_env == 'prod':
+    url_alias = {
+                 'main blog site' : 'http://rlgomes.github.com',
+                }
+else:
+    raise Exception("Unknown environment %s" % test_env)
+
+@Given('I am at (.*)')
+def i_am_at(url):
+    if url in url_alias:
+        url = url_alias[url]
+
+    go_to(url)
+
+@Then('I should see the title (.*)')
+def should_see_the_title(title):
+    assert_title(title)
+{% endhighlight %}
+
+I decided to also incorporate the notion of **test** and **prod** environment
+configuration which you can easily drive from the command line by exporting the
+**ENV** variable. We now need to implement the other steps that are required to
+verify links and headers on the page. So here's a complete solution that handles
+the lists of links and headers:
+
+{% highlight python %}
+from sst.actions import *
+from freshen import *
+
+import os
+
+@After
+def teardown(scenario_ctx):
+    close_window()
+    stop()
+
+test_env = 'test'
+if 'ENV' in os.environ.keys():
+    test_env = os.environ['ENV']
+
+if test_env == 'test':
+    url_alias = {
+                 'main blog site' : 'http://localhost:4000',
+                }
+elif test_env == 'prod':
+    url_alias = {
+                 'main blog site' : 'http://rlgomes.github.com',
+                }
+else:
+    raise Exception("Unknown environment %s" % test_env)
+
+
+def find_element(search_string):
+    """
+    Attempt to find an element by using the specified search string to find the
+    element in the following order of searching:
+
+        1. by id
+        2. by css_class
+        3. by text
+        4. by text_regex
+
+    """
+    if exists_element(id=search_string):
+        return get_element(id=search_string)
+
+    if exists_element(css_class=search_string):
+        return get_element(css_class=search_string)
+
+    if exists_element(text=search_string):
+        return get_element(text=search_string)
+
+    if exists_element(text_regex=search_string):
+        return get_element(text_regex=search_string)
+
+    raise Exception("Can't find the element %s" % search_string)
+
+@Given('I am at (.*)')
+def i_am_at(url):
+    if url in url_alias:
+        url = url_alias[url]
+
+    go_to(url)
+
+@Then('I should see the title (.*)')
+def should_see_the_title(title):
+    assert_title(title)
+
+@NamedTransform('{list}', '([\w\, ]+)', '([\w\, ]+)')
+def transform_user_list(list):
+    return [ name.strip() for name in list.split(',') ]
+
+@Then('I should see the links? {list}')
+def should_see_the_link(links):
+    for link in links:
+        element = find_element(link)
+        assert_link(element)
+
+@Then('I should see the headers? {list}')
+def should_see_the_headers(headers):
+    for header in headers:
+        aux = 'text()="%s"' % header
+        get_element_by_xpath('//h1[%s] | //h2[%s] | //h3[%s] | //h4[%s]' % \
+                             (aux, aux, aux, aux))
+{% endhighlight %}
+
+I added a **teardown** method to correctly close the browser and stop it between
+each scenario, so we have a nice clean state when we start the next scenario. I
+also created the **find_element** function that can do a pretty good job at
+trying to find your element by trying a few different methods. You could easily
+define your own **find_element** with different rules on how you look for
+elements based on the names that are passed. Now, in order for us to write some
+more useful tests we actually need to be able to click on those links and move
+back and forward through the browsing experience. We can do this by using the
+**SST** commands: **go_back** and **click_element** and here's how we'd
+integrate those actions into the available **Freshen** steps:
+
+{% highlight python %}
+from sst.actions import *
+from freshen import *
+
+...
+
+@When('I click back')
+def click_back():
+    go_back()
+
+@When('I click on (.*)')
+def click_on(element):
+    element = find_element(element)
+    click_element(element)
+{% endhighlight %}
+
+We can now write tests like so:
+
+{% highlight cucumber %}
+Feature: Personal Blog
+
+  Scenario: Visit the main page
+   Given I am at main blog site
+    Then I should see the title Rodney's Corner
+     And I should see the links Blog, Archive, About
+     And I should see the headers Blog, Recent Posts, Coding
+
+  Scenario Outline: Navigate from the main page
+   Given I am at main blog site
+    Then I should see the title Rodney's Corner
+   When I click on <link>
+    Then I should see the links <links_to_validate>
+   When I click back
+    Then I should see the title Rodney's Corner
+
+Examples:
+  |  link   |  links_to_validate   |
+  |  Blog   | Blog, Archive, About |
+  | Archive | Blog, Archive, About |
+  |  About  | Blog, Archive, About |
+{% endhighlight %}
+
+I really like how you can define a **Scenario Outline** and then add entries to
+an **ASCII** table which drives that test with additional data points. With this
+I can now write quite an extensive suite of tests for my blog site that would
+at least validate that I can move between the various links on my site without
+any navigation issues and that the content on the site is showing the right
+headers and links in each of the various pages available.
+
+There's also a command line tool called **freshen-list** installed along with
+your **Freshen** install which allows you to basically list the available
+commands for your **Freshen** tests from any sub directory with **Freshen**
+steps defined. You can call it like so:
+
+<console>
+> freshen-list tests
+GIVEN
+  tests/steps.py
+    I am at (.*)
+WHEN
+  tests/steps.py
+    I click back
+    I click on (.*)
+THEN
+  tests/steps.py
+    I should see the headers? ([\w\, ]+)
+    I should see the links? ([\w\, ]+)
+    I should see the title (.*)
+</console>
+
+Its very simple and could use a little tweaking to make it more useful but it
+give syou an immediate sense of what commands are availble for writing tests.
+The last thing I'll say about **Freshen** is that it gives you the ability to
+hide a lot of the complexity of how you interact with a given system and allows
+you to express those actions in simple english which can be maintained by
+someone who doesn't have good coding skills. Another thing about this is that
+you can always change the driving language underneath (ie switch to ruby
+cucumber) without having to change your tests.
+
+I hope this write up has helped you get acquainted with **Freshen** as well as
+learning a bit about **SST** which I feel is really great for web UI testing
+that hides a lot of the complexities of working with **Selenium**.
+
