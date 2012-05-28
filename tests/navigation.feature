@@ -1,4 +1,4 @@
-Feature: Personal Blog
+Feature: Personal Blog Navigation
 
   Scenario: Visit the main page
    Given I am at main blog site
@@ -6,16 +6,16 @@ Feature: Personal Blog
      And I should see the links Blog, Archive, About
      And I should see the headers Blog, Recent Posts, Coding
 
-  Scenario Outline: Navigate from the main page
+  Scenario Outline: Navigate to <link>
    Given I am at main blog site
     Then I should see the title Rodney's Corner
-   When I click on <link>
-    Then I should see the links <links_to_validate>
-   When I click back
+    When I click on <link>
+    Then I should see the links <links>
+    When I click back
     Then I should see the title Rodney's Corner
 
 Examples:
-  | link    |  links_to_validate   |
-  |  Blog   | Blog, Archive, About |
-  | Archive | Blog, Archive, About |
-  |  About  | Blog, Archive, About |
+  |  link   |  links  |
+  |  Blog   | Blog, Archive, About, Jekyll, Bootstrap |
+  | Archive | Blog, Archive, About, Jekyll, Bootstrap |
+  |  About  | Blog, Archive, About, Jekyll, Bootstrap, email, AIM, YIM, Gtalk |
