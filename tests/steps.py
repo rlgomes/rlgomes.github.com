@@ -6,6 +6,17 @@ import enchant
 import re
 import os
 
+headless_run = False
+
+if 'HEADLESS' in os.environ:
+    headless_run = bool(os.environ['HEADLESS'])
+
+if headless_run:
+    from pyvirtualdisplay import Display
+    print '\nstarting virtual display...'
+    display = Display(visible=0, size=(1280, 1024))
+    display.start()
+
 browser_type = 'firefox'
 if 'BROWSER' in os.environ:
     browser_type = os.environ['BROWSER']
