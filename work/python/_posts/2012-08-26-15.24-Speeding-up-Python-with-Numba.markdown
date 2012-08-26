@@ -1,0 +1,102 @@
+---
+layout: post
+title: Speeding up Python with Numba
+published: true
+categories: [numba,python,speed,jit]
+---
+
+Just a quick post on a sweet dynamic compiler for Python which is numpy aware
+and does JIT compiling to LLVM bit-code to speed up your Python loops by quite
+a few tremendous orders of magnitude.
+
+Its still quite beta software and is under heavy development but its extremely
+promising where this project is going. Take for example the following simple 
+code that just sums a large matrix of numbers like so: 
+
+{% highlight python %}
+def matrix_sum(arr):                                                            
+    M, N = arr.shape                                                            
+    result = 0.0                                                                
+    for i in range(M):                                                          
+        for j in range(N):                                                      
+            result += arr[i,j]                                                  
+    return result                
+{% endhighlight %}
+
+Of course the example is using numpy arrays and in this case we'd generate the 
+array by using the numpy module like so:
+
+{% highlight python %}
+random_matrix = numpy.random.randn(5000, 5000)
+{% endhighlight %}
+
+That generates a random matrix of 5000x5000 elements and now we can use that
+to measure how long our function takes to calculate the sum of all of the 
+elements in the matrix:
+
+{% highlight python %}
+start = time.time()                                                             
+matrix_sum(D)
+print('time to use matrix_sum %s' % (time.time()-start))                        
+{% endhighlight %} 
+
+The time it takes to run this little sum of elements is:
+
+<console>
+time to use matrix_sum 18.0450868607
+</console>
+
+That's 18 seconds which of course illustrates how bad Python is at handling 
+loop with even a simple data type such a float.
+
+Now to use numba it involves decorating the method we want to have numba 
+replace with LLVM bit-code and you can do so currently like so:
+
+{% highlight python %}
+from numba import double
+from numba.decorators import jit
+
+@jit(arg_types=[double[:,:]])(matrix_sum)
+def matrix_sum(arr):                                                            
+    M, N = arr.shape                                                            
+    result = 0.0                                                                
+    for i in range(M):                                                          
+        for j in range(N):                                                      
+            result += arr[i,j]                                                  
+    return result                                                               
+{% endhighlight %} 
+
+So very simply we tell numba where to apply its magic and our argument and 
+return types. The developers on numba are already looking into how to use
+introspection to figure out the argument and return types on their own and 
+you'd just have to place the @jit decorator on the method you wanted to apply
+the numba JIT'ing on. 
+
+With that very small addition our same loop now executes in:
+
+<console>
+time to use jit_matrix_sum 0.0553958415985
+</console>
+
+That is an increase in performance of 325x without having to make the code harder
+to read or use some elaborately hard to implement and compreenhend algorithm. 
+For kicks I increased the array size by 9x and made it a 15000x15000 array and 
+still didn't need more than half a second to calculate the sum of this new 
+array with the JIT'ed method:
+
+<console>
+time to use jit_matrix_sum 0.494293928146
+</console>
+
+To understand how this is possible you have to realize what numba is doing is
+converting your array oriented program (ie for loop) and using LLVM to execute
+this as quickly as possible on your hardware which has various elements that
+are actually designed better for array oriented programs and this is what 
+numba is taking advatange of. 
+
+I just wanted to note this library for future reference as I believe they're on 
+the right path and the ideas in the numba library could be integrated into 
+Python core and allow for these type of optimizations to be done on all code 
+paths, boosting the awesomness of Python.
+
+

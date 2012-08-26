@@ -22,6 +22,7 @@ mkdir -p "work/$PLACE/_posts"
 DATE=`date +"%Y-%m-%d-%H.%M"`
 # 2011-10-30-13.00-the-title-of-the-post.markdown
 TITLE=`echo $TITLE | sed 's/ /-/g'`
-echo -e $HEADER > "work/$PLACE/_posts/${DATE}-$TITLE.markdown"
-
+FILE="work/$PLACE/_posts/${DATE}-$TITLE.markdown"
+echo -e $HEADER > $FILE
+echo "post at $FILE" 
 
