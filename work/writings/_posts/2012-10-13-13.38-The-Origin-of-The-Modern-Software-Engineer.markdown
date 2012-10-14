@@ -1,0 +1,256 @@
+---
+layout: post
+title: The Origin of The Modern Software Engineer
+published: true
+categories: [rant,engineering,personal]
+---
+
+In software development these days, what most call “software engineers”, could 
+be better defined as code monkeys. I myself was quite a good code monkey back 
+in the day and can't blame most for finding themselves in the same situation.
+What I hope to achieve with this writing is to give you an impression of how
+we've evolved as software engineers over the last 15 years and where this
+evolution may lead us to. I hope to also introduce a possible future approach
+on how software development should be done and just maybe save some fellow
+engineers hours or days of torturous bug hunting.
+
+
+## The Stone Age Engineer
+
+One of my first jobs never had a QA team or quality engineers to work on
+qualifying and verifying products before we put them out the door. The
+developers (or stone age engineers) were responsible for taking the features
+requested by their bosses and basically developing code to fulfill those
+requirements and testing that said code on the devices at hand. The person
+writing code that had no formal training in quality assurance or even
+understood how to make things more testable, was expected to write code and 
+make sure it was ready for production. They were simply expected to produce 
+good quality software in a timely fashion. In this scenario, the daily routine 
+of the stone age engineer consisted of:
+
+1. writing new code that had to be tested manually by said developer or another
+   developer with which this developer was partnering with.
+
+2. working on any bugs reported by customers on the code that had been released
+   into the customers hands.
+
+3. attempting to verify that the current code being released has the new
+   features working correctly as well as all older features working as 
+   previously manually tested.
+
+I found myself many times questioning how well I could test an application like
+that by hand and how consistent I was at even reproducing the same steps from
+previous “test runs” so that I could at least catch previous issues as well.
+This is of course what we call today automation and its a word that quite a few
+people use but very few actually practice it correctly. Time for automation was
+never scheduled and I had no other choice then to get my code written and
+tested by hand in order to make deadlines. The unfortunate side effect of such
+a development process is that days or weeks later we had yet again produced bug
+3214 for the 5th time in 3 months because we had no way to easily verify that
+we were at least not breaking any existing features that were working for
+customers.
+
+This forces developers to context switch a lot between features they're
+currently writing and ones that they wrote quite a while ago. Since the code
+that was written a while ago never received the required “quality” attention
+that it should have, making changes in that code can be difficult and bug
+ridden. This results in very long nights of coding to fix production issues and
+also makes your code very unmaintainable as most developers never attempt to
+re-factor code given that they don't have tests that would allow them to have
+confidence in making any major changes to the code base.
+
+## The Medieval Engineer 
+
+We're now venturing into the medieval times of development where developers are
+now familiar with the idea of writing unit tests and defending themselves from
+late night coding battles by having the right "armor" at hand when they're
+developing code. This new confidence in making changes is still a bit
+mis-guided as some of you may already know because there are a few things that
+are not being tested by unit tests that developers will certainly be prone to 
+breaking that need to be fixed after pushes to the integration environment. 
+
+During my medieval engineer phase I was introduced to the notion of having one
+team that develops code while another team that is entirely responsible for
+qualifying and verifying said code. This didn't mean that writing unit tests
+was no longer required, because of course nothing can replace good unit tests.
+This really meant that there was now a team dedicated to doing all of the other
+phases of testing which meant the integration testing across services as well
+as performance testing of the services. 
+
+This of course works well when your QA team is a team of engineers that
+actually understand what they're role is in the software development process. I
+say this because in my experience most quality engineers don't understand that
+they're not in a position of blocking developers but instead helping said
+developers find their problems earlier and being able to reverify quickly that
+changes have not broken any existing features.
+
+So in the medieval times of  development we have developers who write code and
+unit test it and then ship the code to the quality assurance engineers who may
+simply do manual black box testing which has to be rerun on each new code push
+from developers. Once this code has reached some level of quality that the
+testers feel is sufficient to be pushed to production or made part of an
+upcoming release, then the QA team gives the thumbs up. Of course the notion of
+automation was well understood by me at this point and manual testing was
+avoided with the right tools and frameworks for automating testing so that on
+each new push of code we would push a button and wait for the results. With
+this the testers can actually spend time writing new tests for the new features
+and helping developers diagnose/debug existing bugs in the code. 
+
+## The Renaissance Engineer
+
+We live in what I like to call the age of the renaissance engineering, because
+we have acquired a lot of knowledge on how to do testing well and we've also
+learned processes for tracking code development in a way that allows individual
+developers to feel like they are making a difference on the team while
+management can easily know when to expect things to ship. You may be aware of
+some of these processes which include the likes of Agile, Scrum, Waterfall, etc. 
+I'm not a fan of taking one of these methods and following it to the tee since 
+I believe that the process by which many engineers can work together to produce 
+software really depends greatly on the quality of engineers on that team. 
+
+The availability of frameworks and tools that can empower the developer to get
+his/her job done are everywhere these days. From tools that can be used to
+analyze your code for bad practices or memory leaks to frameworks that can be
+used to easily graph out the performance behavior of your REST API. We have
+also started understanding the notion of testing early using continuous
+integration environments to find problems as soon as possible so they can be
+fixed sooner than later.  
+
+The renaissance engineer is capable of writing code and tests at the same time
+without feeling that they're “wasting” time. They use well known tools all the
+time and experiment with new tools when they hear about such. Some of them even
+prefer to write their tests before they write their code (i.e. test driven
+development) and find that their tests to be more valuable than they code they
+write. This of course is only the case for a few Leonardo Da Vinci type's who
+have actually learned how to make themselves better engineers throughout their
+career and will continue to do so moving forward. 
+
+For the majority of software development shops though the renaissance engineer
+usually finds him/her self in teams with various other developers at different
+stages of their evolution and sometimes find that the testing responsibility is
+totally in the hands of a QA team that may or may not be doing the right thing.
+This really irks the renaissance engineer who would like to see the QA team do
+things better and at the same times wants to make sure that the development team 
+isn't a blocker for the QA team in terms of giving them the required testing 
+hooks and or fixing blocking problems first.  The renaissance engineer living 
+in todays day and age, finds him/her self quite frustrated with most of the 
+processes being used and how difficult it is to get others to see that if 
+everyone follows a similar process of writing/testing and pushing code then the 
+whole system works better as a whole. 
+
+## The Modern Age Engineer
+
+If we put ourselves in the shoes of a software engineer from the future,
+looking back at the various eras of the software engineering. We are be able to 
+evaluate from all of the failures and success, what approaches really worked in 
+the software development process. The question is now how we each interpret 
+these results and what we feel would actually put us on a faster pace of 
+evolving towards becoming a modern age engineer sooner than later in our 
+careers. The following is my interpretation of how what I believe would be the 
+future of software engineering.
+
+In a future with a modern age engineers one would not have any separation
+between developers and testers. There wouldn't even be such a distinction because
+all members of the team are software engineers capable of writing and 
+understanding code. There would be a single software engineering team 
+responsible for producing any given product. This team consists of engineers 
+who write code to implement features in the product as they also supply the 
+tests that are to be used to verify that the code does in fact behave as 
+expected. The team consists of experts in their own areas of interest, each 
+having expertise in areas such as build & release processes, automation, 
+distributed systems, etc. Of course engineers would be allowed to do cross team 
+work if they had frameworks/tools or expertise that are of use to other teams 
+in the company can benefit from. The notion of someone writing exclusively 
+writing tests would be dead and instead engineers would be responsible for 
+writing their own tests as well as writing integration tests with other 
+engineers that work on dependent services or APIs.
+
+There following would hold true for the whole organization:
+
+* Continuous integration environments are setup and used by everyone to build,
+  deploy and test their code on a regular basis and everyone understands how
+  their code is deployed as well as how their tests are executed against their
+  code.
+
+* Test are written before the code and the code is written to make those tests
+  pass as they are the contract or specification by which the code should
+  behave. 
+
+* These same tests should really serve as documentation on how the code is to
+  be used by others. If written using documentation macros, decorators or
+  annotations they can easily generate documentation from the tests themselves.
+
+* Everyone's uses the same build/deploy and execution scripts, so that building
+  and deploying someone's code is as easy as building and deploying your own
+  code.
+
+* The team uses all of the available tools to make finding problems in code
+  such as findbugs, valgrind and coverity a regular and routine practice. All
+  while using other tools to recommend better practices of writing code in
+  certain languages such as pylint, javascript lint, etc so that the code is 
+  kept clean of easy to detect problems.
+
+* Code style checkers are enforced at check-in time to verify that everyone
+  follows the same conventions of either tabs/spaces or whatever magical
+  concoction that makes code easier to read and maintain by all. 
+
+* Reviewing code is just a natural part of the process of getting your changes
+  into the trunk because you don't want to end up having everyone frown at you
+  when that change breaks something just because you couldn't wait another hour
+  for someone to review your changes before you check them in.
+
+* Individual unit tests can be marked as performance enabled tests, that can
+  then be used by a performance framework to stress tests each unit of
+  available functionality and come up with performance data within a few hours 
+  of code landing in the trunk.
+
+* The frameworks used are all well understood and maintained in languages that
+  most of the team members want to use for writing code and test in. The
+  frameworks are part of the code that is written or maintained in order to help
+  drive the development process to get things ready for pushing to production
+  quicker. These same tools and frameworks are built/deployed and executed just
+  like the rest of the code base and are treated the same way production quality
+  code is treated.
+
+* Everyone feels ownership of the whole code base from the production code,
+  build and release scripts and the tests that make it possible for their
+  production code to be stable and ready for deployment.
+
+Yes most of the previous statements may seem like a Utopian view of the
+software development process but I see it as a very possible reality which
+doesn't get in the way of software development but does in fact make software
+development a well known scientifical process. 
+
+## Conclusion
+
+I started this writing with exposing how I feel we've evolved in terms of
+software engineering and software development processes and hoped to reach a
+phase of our evolution which is true to most in this day and age. I believe we
+could all do much better at being better software engineers than we currently
+are and that I myself, am still learning new approaches to software development
+every day. I didn't spend time focused on the exact tools and frameworks to use, 
+since I believe these types of things change too often and I really focused on 
+identifying the boundaries created between a traditional software development 
+process. 
+
+The fact that we so carefully distinguish the developer role and quality
+engineer role and how much of a waste of time and money that distinction is to
+companies and the whole development process is one of the main points of my
+writing. The real focus should be on how to make all of your engineering power
+work together as a cohesive software development group with everyone
+understanding how things are built/deployed and executed and all engineers
+feeling like they can move around and help others while still being able to
+count on others for help when necessary.
+
+I do hope that after reading this writing you should at least feel that there
+is one thing you can work on immediately to make yourself a better software
+engineer and possibly another 2-3 things that you can set as short term goals
+to get started on at your current position.
+
+I also hope that you realize that this writing is in no way a precise account
+of the situation at all companies but certainly reflects my own experiences and 
+the experiences of a few other colleagues in the business and hopefully can 
+help others feel they're not alone or even generate alot of interesting 
+conversations.
+
+
