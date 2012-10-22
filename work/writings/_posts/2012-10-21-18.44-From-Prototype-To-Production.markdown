@@ -674,3 +674,6 @@ I hope that after reading this post you'll see that you can easily apply the
 same ideas to any of your projects and allow yourself to be a more efficient 
 engineer and also allow you to produce better code.
 
+The code written during this writing can be cloned from:
+* https://github.com/rlgomes/kvs
+
