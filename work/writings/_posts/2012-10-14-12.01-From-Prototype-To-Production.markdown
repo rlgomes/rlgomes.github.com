@@ -1,0 +1,676 @@
+---
+layout: post
+title: From Prototype To Production
+published: true
+categories: [software,engineering,tutorial]
+---
+
+**START 12:01 October 14th, 2012**
+
+In the sequence of my previous post I'd like to give a more real world example
+of how a modern software engineer should be able to write and test code using 
+the vast amount of tools/frameworks available to get the job done in timely 
+fashion while producing high quality code.
+
+To start of course we'll need some sort of a project to build while writing 
+about how to solve the issues we come across. So for this writing I will attempt
+to create a key/value store in **Python** that can be used to mock out a real 
+key/value store such as Redis, LevelDB or Amazon's Dynamo. The current 
+requirements will be:
+
+* Support 3 simple API calls:
+  * GET key
+  * SET key value
+  * DEL key
+
+* The protocol used to communicate should be human readable and really 
+  efficient, just like Redis's communication protocol is.
+
+As part of this writing I will track in real time how many hours I'm spending
+on this project while writing the post so that at the end you can get an idea
+of how little overhead writing tests and documentation while developing really 
+has.
+
+**STOP: 12:11 on October 14th, 2012**
+
+**START 14:57 on October 14th, 2012**
+
+So the first thing we'll have to do is to define the exact protocol we're going
+to use in a way that can be easily consumed by others who will attempt to talk 
+the same protocol or create clients to talk this custom protocol. We mentioned
+earlier we'd be using a protocol similar to what Redis uses. You can read up
+on Redis's communication protocol [here](http://redis.io/topics/protocol) and 
+we'll be greatly simplifying this protocol for this writing like so:
+
+<pre>
+\*[number of arguments] CR LF
+[command name] CR LF
+[argument 1] CR LF
+[argument 2] CR LF
+</pre>
+
+Which means that the first thing sent is the indication of how many arguments 
+will follow separted by a carriage return and line feed character (\r\n). Then
+each of the arguments a single line termianted by \r\n.
+
+So sending a **SET** request for the key **A** to set it to the value 100 would 
+look like so on the wire:
+
+<pre>
+\*3\r\nSET\r\nA\r\n100\r\n
+</pre>
+
+Replies will also be very similar to the way Redis deals with this type of thing
+and we'll basically start a response with a **+** on success followed by a single
+line response, or we'll start with **-** if there was an error followed by a
+single line with the error message.
+
+We now have to decide what we'll use to build the protocol server on and c
+urrently one of the most flexible and best performant ones in the Python world 
+is **Twisted** which can be used to easliy create your own custom protocol or 
+better yet used to easily build your own HTTP, FTP, etc server in minutes. I 
+had to brush up on my knowledge of **Twisted** and how to create my own custom
+protocol and after reading through the documentation for some 15 minutes I found
+that what I wanted to use was the **LineReceiver** implementation to build my 
+protocol on a per line reading of any connection. The first example that you 
+may be able to put together using the **LineReceiver** class may look like 
+this:
+
+{% highlight python %}
+from twisted.internet.protocol import Factory
+from twisted.protocols.basic import LineReceiver
+from twisted.internet import reactor
+
+class Answer(LineReceiver):
+
+    answers = {'How are you?': 'Fine', None : "I don't know what you mean"}
+
+    def lineReceived(self, line):
+        if self.answers.has_key(line):
+            self.sendLine(self.answers[line])
+        else:
+            self.sendLine(self.answers[None])
+
+class AnswerFactory(Factory):
+
+    def __init__(self):
+        pass
+
+    def buildProtocol(self, addr):
+        return Answer()
+
+
+reactor.listenTCP(9999, AnswerFactory())
+reactor.run()
+{% endhighlight %}
+
+This of course is just an example of how you can use twisted to make a line
+reading protocol handler. Now lets actually use this to read our new custom 
+protocol which is a multiline protocol that needs to reconstruct each command
+from the multiple lines that it is broken up into on the wire.
+
+Now even before we start writing the actual server handler code lets first 
+write up a few very simple unit test that we can use to verify that we have a 
+working **set** and **get** commands:
+
+{% highlight python %}
+import socket
+import unittest
+
+class ProtocolTest(unittest.TestCase):
+
+    def setUp(self):
+        self._connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._connection.connect(('localhost', 9999))
+
+    def tearDown(self):
+        self._connection.close()
+
+    def _send_cmd(self, cmd, *args):
+        cmd_string = '*%d\r\n' % (len(args) + 1)
+        cmd_string += '%s\r\n' % cmd
+
+        for arg in args:
+            arg = str(arg)
+            cmd_string += '%s\r\n' % arg
+
+        self._connection.sendall(cmd_string)
+
+        return self._read_response()
+
+    def _read_response(self):
+        status = self._connection.recv(1)
+
+        response = ''
+        read = self._connection.recv(1)
+        while read != '\n':
+            response += read
+            read = self._connection.recv(1)
+
+        if status == '+':
+            # successful response with a single line response
+           return response
+        else:
+            # unsucceful response with error message
+            raise Exception(response)
+
+    def test_basic_set_and_get(self):
+        self._send_cmd('SET', 'A', 100)
+        resp = self._send_cmd('GET', 'A')
+        assert resp == '100', 'expected 100 got %s' % resp
+        
+if __name__ == '__main__':
+    unittest.main()
+{% endhighlight %}
+
+There is quite a lot of test code displayed there but thats because we had to 
+create those helper methods for sending commands and receiving responses. The
+actualy test itself is just 3 lines to send a **SET** command verify with a 
+**GET** command that the current server recorded our 100 value correctly.
+
+We're now back to the server code because we now need to restructure our 
+**CommandReader** so that it can actually read each command line by line and
+translate that into the right underlying set/get command. In a first approach
+at writing our **CommandReader** what we need to do is to make this 
+**LineReceiver** act as state machine that transitions between commands in a 
+very well defined manner. Every line that starts with an asterisk is expected
+to be a new command that is consumed till all arguments are read and the command
+is dispatched and the response is sent back to the client awaiting a response.
+
+A first approach may look like so:
+
+{% highlight python %}
+class CommandReader(LineReceiver):
+    """
+    state machine comand reader 
+    """
+
+    def __init__(self):
+        self.start_command = False
+        self.reading_argument_size = False
+        self.expected_arguments = -1
+        self.args = []
+       
+    def lineReceived(self, line):
+
+        if line.startswith('*'):
+            # new command starting
+            if self.start_command:
+                self.sendLine('-unexpected start of new command\r')
+            self.start_command = True
+            self.expected_arguments = int(line[1:])
+            self.args = []
+
+        if self.expected_arguments == 0:
+            # command complete lets dispatch and return OK
+            self.sendLine('+OK')
+            self.start_command = False
+
+        if self.start_command:
+            # we're still reading the arguments
+            line = line.strip()
+            self.args.append(line)
+            self.expected_arguments -= 1
+{% endhighlight %}
+
+Of course if we run our test agains this server it thinks it has stored data and
+will fail to retrieve the desired data becuase we're always responding with 'OK'
+as you can see here:
+
+<console>
+> python tests/protocol.py
+F
+======================================================================
+FAIL: test_basic_set_and_get (__main__.ProtocolTest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "tests/protocol.py", line 45, in test_basic_set_and_get
+    assert resp == '100', 'expected 100 got %s' % resp
+AssertionError: expected 100 got OK
+
+----------------------------------------------------------------------
+Ran 1 test in 0.002s
+
+FAILED (failures=1)
+</console>
+
+Lets take our current implementation and make the **CommandReceiver** smart
+enough to look upthe correctly handler based on the command name supplied and
+return the response that the handling function returns.
+
+After some debugging and restructuring the code a bit as I made changes and 
+re-ran the tests I realized that the checking for a complete command should 
+always be done after processing each line. Then I also figured that 
+**socket.sendLine** already adds the newline character at the end of each 
+response. Once I fixed the code up like so:
+
+
+{% highlight python%}
+class CommandReader(LineReceiver):
+    """
+    state machine comand reader 
+    """
+
+    def __init__(self, cmdhandler):
+        self._cmdhandler = cmdhandler
+        self._cmd_names = dir(cmdhandler)
+
+        self.start_command = False
+        self.reading_argument_size = False
+        self.expected_arguments = -1
+        self.args = []
+       
+    def lineReceived(self, line):
+        if line.startswith('*'):
+            # new command starting
+            if self.start_command:
+                self.sendLine('-unexpected start of new command\r')
+
+            self.start_command = True
+            self.expected_arguments = int(line[1:])
+            self.args = []
+            return 
+        
+        if self.start_command:
+            # we're still reading the arguments
+            line = line.strip()
+            self.args.append(line)
+            self.expected_arguments -= 1
+
+        if self.expected_arguments == 0:
+            # lookup the method handler
+            command = self.args[0]
+
+            # remove the command name from the arguments
+            self.args = self.args[1:]
+
+            if command in self._cmd_names:
+                func = getattr(self._cmdhandler, command)
+                result = func(*self.args)
+                self.sendLine('+%s' % result)
+            else:
+                self.sendLine('-unknown command %s' % command)
+
+            self.start_command = False
+{% endhighlight %}
+
+Our unit test now passes successfully, like this:
+
+<console>
+> python tests/protocol.py
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.002s
+
+OK
+</console>
+
+Now I have a working prototype that can actually do set and get requests and 
+save that information into memory at runtime. At this point its 16:30 on 
+October the 14th, 2012 and with writing the unit test and writing the code I've 
+spent just a little over an hour and a half to have a working prototype that 
+could be used by a depdendent service to start integrating against. 
+
+What we'll focus on next is using tools such as **pylint** to identify problems
+in the code as well as using **setuptools** to create a setup script that can 
+be used by anyone to easily install this service and start it for others to 
+integrate with while features are being added to the base source.
+
+**STOP 16:32 on October 14th, 2012**
+
+**START 18:59 on October 14th, 2012**
+
+So in order to share our code with others we'll have to create a setup script
+that can be used to easily install and startup the service as well as being 
+able to upgrade your current installation as further updates are made to the
+code base. For this specific code being written we'll create a simple 
+**setup.py** file like so:
+
+{% highlight python %}
+from setuptools import setup, find_packages
+
+setup (
+    name='kvs',
+    version='0.0.1',
+    author='Rodney Gomes',
+    author_email='rodneygomes@gmail.com',
+    url='',
+    test_suite="tests",
+    keywords = ['keyvalue', 'storage'],
+    py_modules = [],
+    scripts = ['kvsserver.py'],
+
+    license='Apache 2.0 License',
+    description='simple key value store',
+    long_description=open('README.md').read(),
+    packages = find_packages(exclude='tests'),
+    install_requires = [ 
+                        'twisted',
+                       ],
+
+    entry_points = {
+        'console_scripts' : [
+            'kvs_start = kvsserver:main',
+        ],                                                                      
+    },                
+)
+{% endhighlight %}
+
+With that we can now check this code in and anyone who wants to run your service
+can easily do the following on the command line with Python 2.7 installed:
+
+<console>
+> git clone https://github.com/rlgomes/kvs.git
+> git checkout v0.0.1
+> python setup.py install
+running install
+...
+Finished processing dependencies for kvs==0.0.1
+</console>
+
+Now your service can easily be started by using the **'kvs_start'** script that 
+should now be in your path. 
+
+Before we proceed to start adding more features and tests to our code lets 
+introduce the notion of a code style checker and static code analyzer called 
+pylint and how we can use it to make sure our code is clean and lean and little
+less prone to errors. Using pylint is super easy as you can install the python
+package with a quick **'pip install pylint'** and then you can call it on any 
+code base like so:
+
+<console>
+> pylint kvsserver.py
+No config file found, using default configuration
+\************* Module kvsserver
+C:  1,0: Missing docstring
+W:  7,0:CommandReader: Method 'rawDataReceived' is abstract in class 'LineReceiver' but is not overridden
+C: 21,4:CommandReader.lineReceived: Invalid name "lineReceived" for type method (should match [a-z_][a-z0-9_]{2,30}$)
+C: 54,0:CommandReaderFactory: Missing docstring
+C: 59,4:CommandReaderFactory.buildProtocol: Invalid name "buildProtocol" for type method (should match [a-z_][a-z0-9_]{2,30}$)
+C: 62,0:CommandHandler: Missing docstring
+C: 67,4:CommandHandler.set: Missing docstring
+C: 71,4:CommandHandler.get: Missing docstring
+C: 76,0:main: Missing docstring
+E: 78,4:main: Module 'twisted.internet.reactor' has no 'listenTCP' member
+E: 79,4:main: Module 'twisted.internet.reactor' has no 'run' member
+
+... other output ommited ...
+
+Your code has been rated at 6.27/10
+</console>
+
+There is quite a bit of output that pylint supplies the most important parts
+are shown above. We can quickly see that we're missing quite a few docstrings 
+and then there are a few things we can ignore such as the missing members that
+is obviously just **pylint** not finding the imports correctly. As with any 
+tool **pylint** is intended to point you in the direction of a problem and you
+ultimately have to make the decision to fix something or leave it be and use 
+for example in this case a docstring to tell **pylint** to be quiet. The score
+given to your code is an interesting way of showing developers if their code is 
+up to par with how **Python** code should be written and maintained.
+
+Lets add thos docstrings and silence the missing member functions tha we know
+are in fact there. With a subsequent rerun of **pylint** I now have a score of
+7.45 which is a pretty decent score. Something like pylint should be used in 
+order to make sure that the code quality doesn't degrade drastically with time
+and that certain levels of code quality and proper code writing are maintained
+acrosss the team.
+
+We're now at a stage where others are already able to install and use our code
+and need to continue adding features to our existing service while making sure
+that with each checkin we don't break any of the older functionality and yet
+are able to quickly introduce new features or bug fixes. 
+
+**STOP 20:01 on October 14th, 2012**
+
+**START 20:22 on October 20th, 2012**
+
+At this point I decided to restructure the code a bit by creating a kvs package
+in which the **CommandHandler** logic into its own module. That way I can 
+continue development on the way we're storing/retrieving data without having to 
+muck around in the kvsserver module. While doing this I also created a few more 
+test to verify the set, get and new del operation all work correctly.
+
+We now have the full API available with a few additional unit tests that verify
+the various use cases for set/get and delete operations. I also spent somtime
+and created a very simple set of performance tests to have an idea of how 
+well this whole thing performs. To create the basic performance tests I first 
+created a **BaseTest** test case to build that had the earlier used **send**
+command to be use to easily send and receive data from the server and then I 
+built the following very simplistic performance test:
+
+{% highlight python %}
+ITERATIONS=20000
+
+class PerformanceTest(BaseTest):
+
+    def test_1st_set_small_key_performance(self):
+        """
+        """
+        start = time.time()
+        for index in range(0, ITERATIONS):
+            self.send('SET', 'key-%d' % index, 'tiny little value')
+        elapsed = time.time() - start
+        print('SET %f ops/sec' % (ITERATIONS/elapsed))
+
+    def test_2nd_get_small_key_performance(self):
+        """
+        """
+        start = time.time()
+        for index in range(0, ITERATIONS):
+            self.send('GET', 'key-%d' % index)
+        elapsed = time.time() - start
+        print('GET %f ops/sec' % (ITERATIONS/elapsed))
+
+    def test_3rd_del_small_key_performance(self):
+        """
+        """
+        start = time.time()
+        for index in range(0, ITERATIONS):
+            self.send('DEl', 'key-%d' % index)
+        elapsed = time.time() - start
+        print('DEL %f ops/sec' % (ITERATIONS/elapsed))
+{% endhighlight %}
+
+The performance numbers were above my expectations, as I was expecting a couple
+of thousand operations per second but got:
+
+<console>
+SET 7829.786726 ops/sec
+GET 6993.390858 ops/sec
+DEL 7976.453482 ops/sec
+</console>
+
+I was satisfied with the single threaded performance of the kvs store at this 
+point and want on making the code easier to read & write and so I spent a little
+time restructuring the **CommandReader** class to be a bit smarter in terms of 
+how we basically parse each command by switching the **lineReceived** method 
+implementation at run time. I also fixed up the base test class to be more 
+specific on the SET/GET & DEL methods being used to talk to the server. Here's 
+what the new **CommandReader** looks like:
+
+
+{% highlight python %}
+class CommandReader(LineReceiver):
+    """
+    state machine comand reader 
+    """
+
+    def __init__(self, cmdhandler):
+        self._cmdhandler = cmdhandler
+        self._cmd_names = dir(cmdhandler)
+
+        self.start_command = False
+        self.reading_argument_size = False
+        self.expected_arguments = -1
+        self.args = []
+
+        self.lineReceived = self._start_command
+
+    def _start_command(self, line):
+        assert line.startswith('*'), 'got %s' % line
+
+        # new command starting
+        if self.start_command:
+            self.sendLine('-unexpected start of new command\r')
+
+        self.expected_arguments = int(line[1:])
+        self.args = []
+
+        self.lineReceived = self._read_command
+        self.start_command = True
+
+    def _read_command(self, line):
+        line = line.strip()
+        self.command = line
+        self.expected_arguments -= 1
+        self.lineReceived = self._read_arguments
+
+    def _read_arguments(self, line):
+        # remove the command name from the arguments
+        line = line.strip()
+        self.args.append(line)
+        self.expected_arguments -= 1
+
+        if self.expected_arguments == 0:
+            # lookup the method handler
+
+            if self.command in self._cmd_names:
+                func = getattr(self._cmdhandler, self.command)
+                try :
+                    result = func(*self.args)
+                    self.sendLine('+%s' % result)
+                except Exception as e:
+                    self.sendLine('-%s' % e)
+            else:
+                self.sendLine('-unknown command %s' % self.command)
+
+            self.start_command = False
+            self.lineReceived = self._start_command
+{% endhighlight %}
+
+The nice thing at this point is that I'm constantly able to change code quite 
+drastically without having to worry if I broke something because the unit tests
+are able to give me some confidence in the changes I'm making.
+
+**STOP 21.15  on October 21st, 2012**
+
+**START 15:39 on October 21st, 2012**
+
+At this point I'd like to take sometime to analyze how much test code I've 
+written vs how much real product code I've written. I'll do this in the simplest
+way possible by just comparing line count:
+
+<console>
+> wc -l tests/*.py
+  55 tests/base.py
+   0 tests/__init__.py
+  41 tests/performance.py
+  45 tests/protocol.py
+ 141 total
+> wc -l kvs/*.py  
+  41 kvs/cmdhandler.py
+   0 kvs/__init__.py
+  91 kvs/kvsserver.py
+ 132 total
+</console>
+
+So right now we actually have a few more lines of test code than we have of 
+actual product code. The thing to realize though is that as we add more API 
+calls to service, the amount of test code won't grow by as much as it has till 
+this point. Lets really show how this works by adding a few new APIs:
+
+* SHUTDOWN
+* RESET
+* KEYS key_reg_ex
+
+The **SHUTDOWN** command is used to basically shutdown the server and the 
+**RESET** command is used to reset the store back to empty. The **KEYS** command
+is a little trickier since it involves returning all of the keys that match the
+regular expression specified. This will force us to introduce a new return type
+to the protocol. What we had in terms of protocol return specification till now
+was:
+
+* **+** means the operation succeeded and is followed by OK or the value of 
+        what you wanted to return
+* **-** is used before the error message of an operation that failed
+* **\*** is used before starting a multi-value response in which the integer
+         after the \* is the number of lines to read
+
+With the multi-line response we can now implement the KEYS correctly. Having
+implemented all of those features we now have a little more product code lines
+than tests and have a pretty well working key/value store that is being used
+by others while we make changes and easily reverify our code as we make those
+changes. here is the lines of test code vs lines of product code comparison:
+
+<console>
+> wc -l tests/*.py       
+  65 tests/base.py
+   0 tests/__init__.py
+  41 tests/performance.py
+  67 tests/protocol.py
+ 173 total
+> wc -l kvs/*.py         
+  70 kvs/cmdhandler.py
+   0 kvs/__init__.py
+ 112 kvs/kvsserver.py
+ 182 total
+</console>
+
+Now I personally don't care if I have more product code than test code because
+to me test code is valuable code that allows me as a developer to actually 
+write code that can be used by others and gaurantees my code at least does what
+I was originally intending.
+
+**STOP 16:46 on October 21st, 2012**
+
+The interesting thing that I'd like to analyze now is roughly how much time was 
+spent on this little project till now and of that time how much time was spent
+writing tests vs writing product code.
+
+So the start and stop times tally looks like so:
+
+<table>
+ <tr>
+   <th>START</th><th>STOP</th><th>Description</th><th>Duration (minutes)</th>
+ </tr>
+ <tr>
+   <td>12:01</td><td>12:11</td><td>Initial Project Specification</td><td>10</td>
+ </tr>
+ <tr>
+   <td>14:57</td><td>16:32</td><td>Prototype Development</td><td>95</td>
+ </tr>
+ <tr>
+   <td>18:59</td><td>20:01</td><td>Making beta Version Available</td><td>62</td> 
+ </tr>
+ <tr>
+   <td>20:22</td><td>21:15</td><td>Restructuring &and; Performance Testing</td><td>53</td>
+ </tr>
+ <tr>
+   <td>15:39</td><td>16:46</td><td>Refactoring Code &and; Adding new APIs</td><td>53</td>
+ </tr>
+</table>
+
+So just after just 4h and 33m of working on this project we have a working 
+service that can be used by others and we're able to easily and quickly extend
+this service while making sure to test existing and new features before each
+and every checkin.
+
+Now there are a few things I should have also worked on but just didn't feel 
+it would have fitted into the length of the post I was working on writing. The
+few things I would have focused on next would have included:
+
+* Making sure to document the protocol specification with the code in a format
+  that would allow others to easily and quickly write their own clients. This 
+  would also make updating the API documentation easier since it resides with 
+  the code that implements the API.
+
+* Adding more tests that would verify the limits of the API usage such as the 
+  max key and value lengths. Not forgetting to test all of the negative scenarios
+  of using the protocol such as invalid integer values, invalid operation names, 
+  etc.
+
+I hope that after reading this post you'll see that you can easily apply the 
+same ideas to any of your projects and allow yourself to be a more efficient 
+engineer and also allow you to produce better code.
+
