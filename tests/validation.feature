@@ -10,8 +10,8 @@ Feature: Personal Blog Content Validation
     Then I should see everything spelled correctly
 
 Examples:
-  |  link   |  headers   |
-  |  Blog   | Blog, Coding, Recent Posts  |
+  |  link   | headers |
+  |  Blog   | Blog, Recent Posts  |
   | Archive | Archive |
   |  About  | About, Rodney Lopes Gomes |
 

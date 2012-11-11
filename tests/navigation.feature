@@ -4,7 +4,7 @@ Feature: Personal Blog Navigation
    Given I am at main blog site
     Then I should see the title Rodney's Corner
      And I should see the links Blog, Archive, About
-     And I should see the headers Blog, Recent Posts, Coding
+     And I should see the headers Blog, Recent Posts 
 
   Scenario Outline: Navigate to <link>
    Given I am at main blog site

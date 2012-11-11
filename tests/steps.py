@@ -30,7 +30,8 @@ custom_words = [
                 "prolog", "java", "python", "sst", "freshen", "rodney", "lopes",
                 "gomes", 'disqus', 'memoize', 'corun', 'kif', 'github', 'nic',
                 'GitHub', 'rlgomes.github.com', 'pyperf', 'clifu', 'pangu',
-                "jsdb"
+                "jsdb", "jsmacro", 'rlgomes', 'numba', 'InfoRepos', 'Repos',
+                "rlgomes's"
                ]
 
 for word in custom_words:

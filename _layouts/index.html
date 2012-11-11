@@ -58,12 +58,7 @@ tr:hover.linkable {
     </body>
 
     <script src="/libs/jquery.min.js"></script>
-    <script src="/libs/github_badges/jquery.github_badge.js" type="text/javascript"></script>
-<!--
-    <script src="/libs/prototype.js" type="text/javascript"></script>
-    <script src="/libs/scriptaculous.js" type="text/javascript"></script>
-    <script src="/libs/index.js" type="text/javascript"></script>
--->
+    <script src="/libs/github_badges/jquery.github_badge.min.js" type="text/javascript"></script>
     <script>
     $("#user_badge").GitHubBadge({
         login: "rlgomes",
@@ -75,4 +70,5 @@ tr:hover.linkable {
         repo_count          : "10"         // maximum number of repos to be displayed
     });
     </script>
+    {% include ga_script.html %}
 </html>
