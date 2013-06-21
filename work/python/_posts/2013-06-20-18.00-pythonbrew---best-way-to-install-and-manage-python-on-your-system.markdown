@@ -20,7 +20,7 @@ curl -kL http://xrl.us/pythonbrewinstall | bash
 and then adding the following to your bashrc:
 
 <console>
-[[ -s $HOME/.pythonbrew/etc/bashrc ]] && source $HOME/.pythonbrew/etc/bashrc
+[[ -s $HOME/.pythonbrew/etc/bashrc ]] &amp;&amp; source $HOME/.pythonbrew/etc/bashrc
 </console>
 
 With this you now have pythonbrew ready to go and you can check what are the 
