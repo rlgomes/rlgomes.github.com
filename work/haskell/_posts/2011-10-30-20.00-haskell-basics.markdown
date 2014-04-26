@@ -10,6 +10,7 @@ program in Haskell and have it execute within the Haskell interpreter. Lets
 start with writing a simple "Hello World" application in Haskell:
 
 {% highlight hs %}
+#!/usr/bin/env runhaskell
 module Main(main) where
 main = putStrLn "Hello, World!"
 {% endhighlight %}

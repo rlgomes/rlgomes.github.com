@@ -1,10 +1,7 @@
 name: Rodney's Corner
 description: Just another code monkey who has a blog
 url: http://rlgomes.github.com/
-
 png_dir: images
-
 links.jekyll: http://jekyllrb.com/ 
 links.dtf.wiki: https://github.com/rlgomes/dtf/wiki/
-
-
+markdown: kramdown
