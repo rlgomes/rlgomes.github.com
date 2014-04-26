@@ -56,6 +56,7 @@
             border: none;
             clear: both;
             float: right;
+            max-width: 48px;
         }
         .ghb_badge .ghb_badge_header h1, .ghb_badge .ghb_badge_header h1 a  {
             clear: left;
