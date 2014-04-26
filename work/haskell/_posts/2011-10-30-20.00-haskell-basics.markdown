@@ -10,7 +10,6 @@ program in Haskell and have it execute within the Haskell interpreter. Lets
 start with writing a simple "Hello World" application in Haskell:
 
 {% highlight hs %}
-#! /usr/bin/env runhaskell
 module Main(main) where
 main = putStrLn "Hello, World!"
 {% endhighlight %}
@@ -189,9 +188,11 @@ now an infix version of the prefix *div* function.
 
 * **lambda expression** - A lambda expression allows you to define an in
 place function in a more mathematical friendly format. You basically describe
-for each x what the function will do. So for example:<pre>
+for each x what the function will do. So for example:
+<pre>
 \x -> x + 2
-</pre> declares a function that for each x passed as an argument, the function
+</pre>
+declares a function that for each x passed as an argument, the function
 will returns x plus 2. Lambda expressions are great for saving space and not
 having to declare additional named functions when you just need a function to
 get the job done there and then.
