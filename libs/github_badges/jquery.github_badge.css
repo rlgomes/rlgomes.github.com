@@ -56,7 +56,6 @@
             border: none;
             clear: both;
             float: right;
-            max-width: 48px;
         }
         .ghb_badge .ghb_badge_header h1, .ghb_badge .ghb_badge_header h1 a  {
             clear: left;
@@ -110,6 +109,7 @@
             float: right;
             margin: 0 10px;
             padding: 10px;
+            max-width: 48px;
         }
         .ghb_badge .ghb_badge_user_info dl {
             font-size: 12px;
