@@ -1,7 +1,4 @@
 
-img {
-    width: 641px;
-}
 
 console {
     background-color: #000000;
@@ -138,4 +135,9 @@ body {
 
 .topbar .btn {
   border: 0;
+}
+
+.span10 img {
+	width: 660px;
+	padding-right: 19px;
 }
