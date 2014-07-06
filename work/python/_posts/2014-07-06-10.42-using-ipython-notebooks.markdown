@@ -1,0 +1,49 @@
+---
+layout: post
+title: iPython Notebooks Rock!
+published: true
+categories: [ipython,awesome,notebooks]
+---
+
+Decided to write a quick and short post on using **ipython notebooks** as I
+came across this just today and found it to be extremely useful. If you already
+used ipython then I think **ipython notebooks** will be super quick to pick up.
+The idea behind the **ipython notebooks** is that they're an ipython session in
+the browser that you can save and share with others. Then within that session
+you can easily edit the existing session so you can undo parts of it that you
+didn't want to share and the final product is a clean session of python code
+that you were attempting to show someone else how something works.
+
+The nice thing about **ipython notebook** is that if you're already using 
+**ipython** then you already have it installed and ready to go:
+
+    > ipython notebook
+    ...
+
+The previous command will open your browser on an ipython session and you can 
+start writing into the Web UI the same expressions you'd do in **ipython** on 
+the command line like so:
+
+    import random
+    data = [ random.randint(1,1000) for _ in range(0, 10) ]
+    print data
+
+Once you've filled in a slot on the screen you can hit **Ctrl+Enter** or go to
+the top and press the play button to have your code intepreted and the result
+rendered in the ipytho notebook. For the above you'd have something like so:
+
+![simple session](/images/2014/ipython_notebooks/simple_ipython_session.png)
+
+Now you can save the above session and share it with a colleague with ease. Just
+click on the **File** -> **Download as** and pick your option. You can start to
+see just how useful this is when you share your **ipynb** file with another
+pythonista and actually share a piece of executable code that can be used to
+iterate on an idea within the ipython shell.
+
+For a more interesting example make sure to **pip** install the vincent library
+and then have a look at the [vincent session](/images/2014/ipython_notebooks/vincent_session.ipynb)
+from within your own **ipython notebook** session by starting that session in a
+directory that contains the **ipynb** file. If the previous loading worked
+correctly you'll be looking at a similar session to the following one:
+
+![vincent session](/images/2014/ipython_notebooks/vincent_session.png)
