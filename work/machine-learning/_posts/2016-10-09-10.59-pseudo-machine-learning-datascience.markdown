@@ -27,7 +27,7 @@ they were reviewing.
 
 Lets get started by downloading the data from the **Kaggle** source above and
 for this example we're going to use the **sqlite** database provided. I created
-a quick [virtualenv]() like so:
+a quick [virtualenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/) like so:
 
 ```bash
 virtualenv env -p python3
