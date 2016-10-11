@@ -1,0 +1,683 @@
+---
+layout: post
+title: pseudo machine learning
+published: true
+categories: [python, machine learning, prediction]
+---
+
+Been reading up on a lot of machine learning python tool kits and how exactly
+one can apply data science to everyday scenarios. While doing so I've been
+wondering how much of these machine learning algorithms can be written in a less
+mathematical way and instead by analyzing the problem at hand and attempting to
+devise an algorithm to do some data classification but just devising a data
+structure (model) that can capture from a given data sample what makes something
+fall into category A or B.
+
+For this specific experiment I'm going to use the data set from
+[Amazon fine food reviews](https://www.kaggle.com/snap/amazon-fine-food-reviews)
+from [Kaggle](https://www.kaggle.com/) which has about 500K reviews from amazon
+including the review score given by the person who wrote the review. What I'll
+attempt to do is to create a model that can take lets say 250K worth of reviews
+and figure out what set of words (ngrams) make for a high score of 5 vs a low
+score of 1 and then apply this to all other 250K reviews and see how close the
+model comes to predicting the reviews score based solely on the words used. The
+idea here is that we'd end up with a model that basically understands sentiment
+of what the person was writing and if they actually liked or disliked the thing
+they were reviewing.
+
+Lets get started by downloading the data from the **Kaggle** source above and
+for this example we're going to use the **sqlite** database provided. I created
+a quick [virtualenv]() like so:
+
+```bash
+virtualenv env -p python3
+```
+
+Then proceeded to write a simple script called **analysis.py**, like so:
+
+```python
+import sqlite3
+
+def main():
+    conn = sqlite3.connect('amazon-fine-foods/database.sqlite')
+    cursor = conn.cursor()
+
+    results = cursor.execute('select score, summary, text from reviews limit 5')
+
+    for result in results:
+        print(result)
+
+if __name__ == '__main__':
+    main()
+```
+
+Which produces the output
+
+```bash
+(5, 'Good Quality Dog Food', 'I have bought several of the Vitality canned dog food products and have found them all to be of good quality. The product looks more like a stew than a processed meat and it smells better. My Labrador is finicky and she appreciates this product better than  most.')
+(1, 'Not as Advertised', 'Product arrived labeled as Jumbo Salted Peanuts...the peanuts were actually small sized unsalted. Not sure if this was an error or if the vendor intended to represent the product as "Jumbo".')
+(4, '"Delight" says it all', 'This is a confection that has been around a few centuries.  It is a light, pillowy citrus gelatin with nuts - in this case Filberts. And it is cut into tiny squares and then liberally coated with powdered sugar.  And it is a tiny mouthful of heaven.  Not too chewy, and very flavorful.  I highly recommend this yummy treat.  If you are familiar with the story of C.S. Lewis\' "The Lion, The Witch, and The Wardrobe" - this is the treat that seduces Edmund into selling out his Brother and Sisters to the Witch.')
+(2, 'Cough Medicine', 'If you are looking for the secret ingredient in Robitussin I believe I have found it.  I got this in addition to the Root Beer Extract I ordered (which was good) and made some cherry soda.  The flavor is very medicinal.')
+(5, 'Great taffy', 'Great taffy at a great price.  There was a wide assortment of yummy taffy.  Delivery was very quick.  If your a taffy lover, this is a deal.')
+```
+
+Now the way I'd break this down is that for each review body I'd assume there is
+a language used that highly influences the score given to the review. Things
+such as stating `I disliked the way` or `I truly enjoyed` would be indicative
+of a positive or negative review and the sum of all of these kind of statements
+would have a high correlation to the score given by the user. That means we
+want to create a structure that can capture the average score associated with
+the use of certain groupings of words. Those groupings are known as n-grams and
+you can read more on that [here](https://en.wikipedia.org/wiki/N-gram) and
+we can easily break up those reviews into n-grams like so:
+
+```python
+def ngramize(text, minimum=2, maximum=6):
+    words = text.split()
+    result = []
+
+    for ngrams in range(minimum, maximum):
+        tuples = zip(*[list(words[index:]) for index in range(ngrams)])
+        result += [ ' '.join(ngram) for ngram in tuples]
+
+    return result
+```
+
+The above simply breaks up the text provided into words and then iterates
+through the resulting elements in order constructing n-grams of length `minimum`
+to `maximum` along the way.
+
+Now that we have our n-grams I've simply decided I only care about n-grams of
+length 2 to 6 for the time being and we'll want to now use the existing score
+to calculate the average score associated with each n-gram's usage through out
+the various reviews we use as our training data. Here's the quick and dirty
+approach I came up with:
+
+```python
+import json
+import sqlite3
+
+def ngramize(text, minimum=2, maximum=6):
+    words = text.split()
+    result = []
+
+    for ngrams in range(minimum, maximum):
+        tuples = zip(*[list(words[index:]) for index in range(ngrams)])
+        result += [ ' '.join(ngram) for ngram in tuples]
+
+    return result
+
+def main():
+    conn = sqlite3.connect('amazon-fine-foods/database.sqlite')
+    cursor = conn.cursor()
+
+    results = cursor.execute('select score, summary, text from reviews limit 5')
+
+    # this will store each ngram the average score associated with said ngram's
+    # usage
+    ngram_scores = {}
+    total = 0
+
+    for score, summary, review in results:
+        total += 1
+        ngrams = ngramize(review)
+
+        for ngram in ngrams:
+            if ngram not in ngram_scores:
+                ngram_scores[ngram] = {
+                    'score': score,
+                    'appearances': 1
+                }
+
+            else:
+                ngram_scores[ngram]['score'] += score
+                ngram_scores[ngram]['appearances'] += 1
+
+    for ngram in ngram_scores.keys():
+        ngram_scores[ngram] = ngram_scores[ngram]['score'] / ngram_scores[ngram]['appearances']
+
+    print(json.dumps(ngram_scores, indent=2))
+
+if __name__ == "__main__":
+    main()
+```
+
+Running the above produces a lengthy output of n-grams to average score values
+and for just 5 reviews has over 900 n-grams associated. We've started seeing a
+few silly things in the output such as n-grams across sentences which obviously
+don't make sense:
+
+```bash
+  "good product.I love these chips": 5.0,
+```
+
+as well as HTML tags in the middle of the n-grams constructed:
+
+```bash
+  "it's ready.<br /><br />Tastes": 5.0,
+```
+
+So lets use [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/)
+to extract the HTML tags out of our way and instead of calculating n-grams for
+the whole text lets do so at the sentence level by splitting our text on the
+final period of a sentence. Here's how things look now in terms of the python
+solution:
+
+```python
+from bs4 import BeautifulSoup
+
+import json
+import sqlite3
+
+def ngramize(text, minimum=2, maximum=6):
+
+    # remove HTML tags
+    soup = BeautifulSoup(text, 'html.parser')
+    text = soup.get_text()
+
+    result = []
+    # process sentence by sentence
+    for sentence in text.split('.'):
+        words = sentence.split()
+
+        for ngrams in range(minimum, maximum):
+            tuples = zip(*[list(words[index:]) for index in range(ngrams)])
+            result += [ ' '.join(ngram) for ngram in tuples]
+
+    return result
+
+def main():
+    conn = sqlite3.connect('amazon-fine-foods/database.sqlite')
+    cursor = conn.cursor()
+
+    results = cursor.execute('select score, summary, text from reviews limit 5')
+
+    # this will store each ngram the average score associated with said ngram's
+    # usage
+    ngram_scores = {}
+    total = 0
+
+    for score, summary, review in results:
+        total += 1
+        ngrams = ngramize(review)
+
+        for ngram in ngrams:
+            if ngram not in ngram_scores:
+                ngram_scores[ngram] = {
+                    'score': score,
+                    'appearances': 1
+                }
+
+            else:
+                ngram_scores[ngram]['score'] += score
+                ngram_scores[ngram]['appearances'] += 1
+
+    for ngram in ngram_scores.keys():
+        ngram_scores[ngram] = ngram_scores[ngram]['score'] / ngram_scores[ngram]['appearances']
+
+    print(json.dumps(ngram_scores, indent=2))
+    print(len(ngram_scores))
+
+if __name__ == "__main__":
+    main()
+```
+
+Running the analysis script against the first 100 reviews takes 1.3s and for
+1000 takes 4s. I'm sure we could spend a ton of time optimizing things but right
+now I'll take correctness over speed and will dive back into any performance
+gains later.
+
+Now that we have a mapping of n-grams to an average score associated with said
+n-gram we can start to verify how well this model works. The first idea that
+occurred to me is to see exactly how close the model predicts the scores for
+the exact same reviews it was using for training. I simply calculated the score
+by averaging the value of all of the n-grams found within a review and spitting
+out the number side by side with the actual score. The below output is from
+using the first 1000 reviews as training data and simply applying the model to
+the first 20 reviews:
+
+```bash
+predicted: 4.87, actual: 5.00
+predicted: 1.21, actual: 1.00
+predicted: 4.01, actual: 4.00
+predicted: 2.48, actual: 2.00
+predicted: 4.92, actual: 5.00
+predicted: 4.00, actual: 4.00
+predicted: 4.89, actual: 5.00
+predicted: 4.83, actual: 5.00
+predicted: 4.94, actual: 5.00
+predicted: 4.91, actual: 5.00
+predicted: 4.88, actual: 5.00
+predicted: 4.89, actual: 5.00
+predicted: 1.50, actual: 1.00
+predicted: 4.07, actual: 4.00
+predicted: 4.90, actual: 5.00
+predicted: 4.78, actual: 5.00
+predicted: 2.41, actual: 2.00
+predicted: 4.84, actual: 5.00
+predicted: 4.92, actual: 5.00
+predicted: 4.90, actual: 5.00
+```
+
+So far this is very promising but lets not forget this is the model running
+against the exact same data it was trained on.
+
+Now we've reached the point where we want to simply train with the first 10K
+of reviews and then run the model against the next 10K of reviews and calculate
+the root mean square error ([RMSE](https://en.wikipedia.org/wiki/Root-mean-square_deviation))
+of our prediction.
+
+The new python script looks like so:
+
+```python
+from bs4 import BeautifulSoup
+from numpy import mean, sqrt, square
+
+import json
+import sqlite3
+
+def ngramize(text, minimum=2, maximum=6):
+
+    # remove HTML tags
+    soup = BeautifulSoup(text, 'html.parser')
+    text = soup.get_text()
+
+    result = []
+    # process sentence by sentence
+    for sentence in text.split('.'):
+        words = sentence.split()
+
+        for ngrams in range(minimum, maximum):
+            tuples = zip(*[list(words[index:]) for index in range(ngrams)])
+            result += [ ' '.join(ngram) for ngram in tuples]
+
+    return result
+
+def main():
+    conn = sqlite3.connect('amazon-fine-foods/database.sqlite')
+    cursor = conn.cursor()
+
+    results = cursor.execute('select score, summary, text from reviews limit 20000')
+
+    # this will store each ngram the average score associated with said ngram's
+    # usage
+    ngram_scores = {}
+    total = 0
+
+    for score, summary, review in results:
+        total += 1
+
+        if total > 10000:
+            break
+
+        ngrams = ngramize(review)
+
+        for ngram in ngrams:
+            if ngram not in ngram_scores:
+                ngram_scores[ngram] = {
+                    'score': score,
+                    'appearances': 1
+                }
+
+            else:
+                ngram_scores[ngram]['score'] += score
+                ngram_scores[ngram]['appearances'] += 1
+
+    for ngram in ngram_scores.keys():
+        ngram_scores[ngram] = ngram_scores[ngram]['score'] / ngram_scores[ngram]['appearances']
+
+    # lets use the n-gram scores to calculate the predicted score for an
+    # existing review to see just how close we can get
+
+    errors = []
+
+    for score, summary, review in results:
+        ngrams = ngramize(review)
+        predicted_score = 0.0
+        ngrams_found = 0
+
+        for ngram in ngrams:
+            if ngram in ngram_scores.keys():
+                predicted_score += ngram_scores[ngram]
+                ngrams_found += 1
+
+
+        predicted_score = predicted_score / ngrams_found
+        #print('actual: %2.2f prediction: %2.2f' % (score, predicted_score))
+
+        errors.append(score - predicted_score)
+
+    print('RMSE: %2.2f' % sqrt(mean(square(errors))))
+
+if __name__ == "__main__":
+    main()
+```
+
+The output from this script gave us the following:
+
+```bash
+RMSE: 1.16
+```
+
+Which means on average we're off by 1.16 with our prediction of the review score
+as provided by the person who wrote the review. Now that isn't horrible on a
+scale of 1-5 we're only off by 23% with a super simple model we wrote in less
+than an hour. There a few things we can try to make this work better and one of
+them is to use the notion of [stop words](https://en.wikipedia.org/wiki/Stop_words)
+to avoid creating n-grams composed solely of stop words since those are "fluff"
+in the spoken language. I won't go into those just yet as I want to see how this
+experiment does as we train on a bigger chunk of the data set. So I trained the
+model against the first 100K of reviews and then predicted the following 100K
+and we got:
+
+```bash
+RMSE: 1.04
+```
+
+Which means that with a larger training set we're seeing the model behave much
+better in terms of predictions. Another thing to note is while the script runs
+its building an enormous hash table for all of n-grams found and it can grow to
+several gigabytes of space. So for my last experiment I'll try to train with the
+first 250K worth of reviews and see how the RMSE looks for predicting the remaining
+250K of reviews. The process hit 3.7GB of usage and after a little over 5
+minutes we got got the following:
+
+```bash
+RMSE: 1.04
+```
+
+Which means we'd be able to predict the overall we're able to predict a review
+score with an error of about 21% and we used a method that was very easy to
+explain and follow along without any unnecessary complexities of complicated
+machine learning algorithms.
+
+Another idea I had was to simply train the model with the first 100K of reviews
+and then see if I wrote my own negative/positive review and see if the score I
+would get would reflect what I had written. Therefore providing me with a pretty
+good sentiment analysis tool. So I restructured the existing script so I could
+train separately from predicting and also be able to save the model after
+training so I could then use to analyze text and be provided with a value from
+1 (negative sentiment) to 5 (positive sentiment). This is what the tool looks
+like now:
+
+```python
+#!/usr/bin/env python3
+
+import os
+import pickle
+import sqlite3
+
+import click
+import requests
+
+from bs4 import BeautifulSoup
+from numpy import mean, sqrt, square
+
+
+def ngramize(text, minimum=2, maximum=6):
+
+    # remove HTML tags
+    soup = BeautifulSoup(text, 'html.parser')
+    text = soup.get_text()
+
+    result = []
+    # process sentence by sentence
+    for sentence in text.split('.'):
+        words = sentence.split()
+
+        for ngrams in range(minimum, maximum):
+            tuples = zip(*[words[index:] for index in range(ngrams)])
+            result += [' '.join(ngram) for ngram in tuples]
+
+    return result
+
+@click.group()
+def cli():
+    pass
+
+@cli.command()
+@click.option('--limit', '-l',
+              type=int,
+              help='how many entries from the amazon fine foods sqlite db to ' +
+                   'train with')
+@click.option('--amazon-reviews-path',
+              default='amazon-fine-foods',
+              help='the path to the directory containing the amazon fine ' +
+                   'foods review database.sqlite file')
+@click.option('--output-model',
+              default='model.pickle',
+              help='output filename to save the trained model')
+def train(limit, amazon_reviews_path, output_model):
+    conn = sqlite3.connect(os.path.join(amazon_reviews_path, 'database.sqlite'))
+    cursor = conn.cursor()
+
+    results = cursor.execute('select score, text from reviews limit %d' % limit)
+
+    # this will store each ngram the average score associated with said ngram's
+    # usage
+    ngram_scores = {}
+    total = 0
+
+    for score, review in results:
+        total += 1
+
+        ngrams = ngramize(review)
+
+        for ngram in ngrams:
+
+            if ngram not in ngram_scores:
+                ngram_scores[ngram] = {
+                    'score': score,
+                    'appearances': 1
+                }
+
+            else:
+                ngram_scores[ngram]['score'] += score
+                ngram_scores[ngram]['appearances'] += 1
+
+    for ngram in ngram_scores.keys():
+        ngram_scores[ngram] = (ngram_scores[ngram]['score'] /
+                               ngram_scores[ngram]['appearances'])
+
+    with open(output_model, 'wb') as output:
+        pickle.dump(ngram_scores, output, pickle.HIGHEST_PROTOCOL)
+
+@cli.command()
+@click.option('--skip', '-s',
+              default=1000,
+              type=int,
+              help='how many entries to skip ahead, ie more than the ones ' +
+              'you trained against')
+@click.option('--limit', '-l',
+              default=1000,
+              type=int,
+              help='how many entries the --skip value to predict scores for')
+@click.option('--amazon-reviews-path',
+              default='amazon-fine-foods',
+              help='the path to the directory containing the amazon fine ' +
+                   'foods review database.sqlite file')
+@click.option('--input-model',
+              default='model.pickle',
+              help='input filename of the previously trained model')
+def predict(skip, limit, amazon_reviews_path, input_model):
+
+    with open(input_model, 'rb') as input:
+        ngram_scores = pickle.load(input)
+
+    conn = sqlite3.connect(os.path.join(amazon_reviews_path, 'database.sqlite'))
+    cursor = conn.cursor()
+
+    results = cursor.execute('select score, text from reviews limit %d' %
+                             (skip + limit))
+
+    # lets use the n-gram scores to calculate the predicted score for an
+    # existing review to see just how close we can get
+    errors = []
+    total = 0
+    for score, review in results:
+        total += 1
+
+        if total < skip:
+            continue
+
+        ngrams = ngramize(review)
+        predicted_score = 0.0
+        ngrams_found = 0
+
+        for ngram in ngrams:
+
+            if ngram in ngram_scores.keys():
+                predicted_score += ngram_scores[ngram]
+                ngrams_found += 1
+
+        if ngrams_found != 0:
+            predicted_score = predicted_score / ngrams_found
+
+        #print('actual: %2.2f prediction: %2.2f' % (score, predicted_score))
+        errors.append(score - predicted_score)
+
+    print('RMSE: %2.2f' % sqrt(mean(square(errors))))
+
+@cli.command()
+@click.argument('text')
+@click.option('--input-model',
+              default='model.pickle',
+              help='input filename of the previously trained model')
+def analyze(text, input_model):
+
+    with open(input_model, 'rb') as input:
+        ngram_scores = pickle.load(input)
+
+    ngrams = ngramize(text)
+    ngrams_found = 0
+    score = 0
+
+    for ngram in ngrams:
+
+        if ngram in ngram_scores.keys():
+            score += ngram_scores[ngram]
+            ngrams_found += 1
+
+    if ngrams_found != 0:
+        score = score / ngrams_found
+
+    print('score: %s' % score)
+
+
+if __name__ == "__main__":
+    cli()
+```
+
+The script grew pretty significantly in size but now we can actually train the
+model and subsequently test it against different ranges in the review database
+as well as against a string of text. So lets first train against the first 100K
+reviews:
+
+```bash
+./senti.py -l 100000
+```
+
+Now we can run against the next 1000 reviews in the database and see how high or
+low the RMSE is:
+
+```bash
+> ./senti.py predict -l 100000 -s 1000
+RMSE: 0.75
+```
+
+Nothing new about these last few uses but now comes the more interesting part
+in which we see how well the model can be used to analyze a new arbitrary piece
+of text in terms of a positive or negative sentiment:
+
+```bash
+> ./senti.py analyze 'I like this scripting tool'
+score: 4.236562683156721
+```
+
+Now what if express that we `really like` this scripting tool:
+
+```bash
+> ./senti.py analyze 'I really like this scripting tool'
+score: 4.246059117643124
+```
+
+The score was slightly higher and what if we `love` this scripting tool:
+
+```bash
+> ./senti.py analyze 'I love this scripting tool'
+score: 4.637583998372766
+```
+
+How well does negative sentiment detection work:
+
+```bash
+> ./senti.py analyze 'I do not like this scripting tool'
+score: 3.639240038501364
+```
+
+That wasn't as low as we'd like but lets see if expressing a strong dislike
+results in a lower value:
+
+```bash
+> ./senti.py analyze 'I really do not like this scripting tool'
+score: 3.8001524620308818
+```
+
+Lower but no where near where I'd want it to be so I just started expressing
+in a harsher manner how negatively I felt about this tool:
+
+```bash
+> ./senti.py analyze 'I hate this scripting tool'
+score: 2.586253369272237
+```
+
+I'm now starting to see that as well as this tool has been working its having
+a hard time when predicting scores for negative sentiments. Experimenting a bit
+I'm seeing that smaller text is behaving badly and my theory is that small
+n-grams such as "I really" "this scripting" and others that don't express actual
+sentiment on their own would have a negative effect on the prediction since the
+sentence "I really hate" vs "I really like" would be skewed by the usage of
+"I really" in the various reviews. So I decided to only train the model on
+n-grams with a minimum length of 3 and maximum length of 6 and the resulting
+model is behaving much better:
+
+```bash
+> ./senti.py analyze 'I like this'
+score: 4.549878345498784
+> ./senti.py analyze 'I love this'
+score: 4.7824878387769285
+> ./senti.py analyze 'I really love this'
+score: 4.54860095976375
+> ./senti.py analyze 'I do not like this'
+score: 3.118788898794749
+> ./senti.py analyze 'I hate this'
+score: 1.0
+```
+
+Which is behaving quite a bit better than before and now I'm curious if the
+model does a better job of predicting the scores for the next 100K of reviews:
+
+```bash
+> ./senti.py predict -l 100000 -s 100000
+RMSE: 1.01
+```
+
+So we actually improved even if just a tiny bit on the already existing RMSE of
+1.04.
+
+This was simply an experiment to see how well this whole idea would work and I'm
+surprised I was able to get any usefulness out of something I wrote up in a few
+hours while documenting and experimenting with the approach as I went along. If
+you attempt to use the code here make sure to install the following
+requirements:
+
+```
+beautifulsoup4==4.5.1
+click==6.6
+numpy==1.11.2
+requests==2.11.1
+```
+Which you can do by issuing `pip install xyz=1.2.3` for each of those lines and
+the above script should just work granted you've downloaded the
+[Amazon fine food reviews](https://www.kaggle.com/snap/amazon-fine-food-reviews)
+data set.
