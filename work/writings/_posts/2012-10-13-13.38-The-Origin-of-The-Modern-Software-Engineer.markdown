@@ -61,13 +61,13 @@ confidence in making any major changes to the code base.
 
 ## The Medieval Engineer 
 
-We're now venturing into the medieval times of development where developers are
-now familiar with the idea of writing unit tests and defending themselves from
-late night coding battles by having the right "armor" at hand when they're
-developing code. This new confidence in making changes is still a bit
-mis-guided as some of you may already know because there are a few things that
-are not being tested by unit tests that developers will certainly be prone to 
-breaking that need to be fixed after pushes to the integration environment. 
+I'd consider the past 5 years to be the medieval times of development where
+developers are now familiar with the idea of writing unit tests and defending
+themselves from late night coding battles by having the right "armor" at hand
+when they're developing code. This new confidence in making changes is still a
+bit mis-guided as some of you may already know because there are a few things
+that are not being tested by unit tests that developers will certainly be prone
+to breaking that need to be fixed after pushes to the integration environment.
 
 During my medieval engineer phase I was introduced to the notion of having one
 team that develops code while another team that is entirely responsible for
