@@ -1,0 +1,126 @@
+---
+layout: post
+title: Shell tips and tricks
+published: true
+categories: [shell, bash]
+---
+
+Its been a while since I've written a blog post and I thought I'd dedicate this
+one to some of the tricks I've used when working with my shell in my terminal
+that make me more productive on a daily basis.
+
+To start I like to use zsh because it has a lot of features that few other
+shells have such as:
+
+ * autocomplete commands such as kill with the list of currently running
+   processes and it does this for quite a few other commands
+ * shared history (among different zsh sessions)
+ * hook functions (we'll talk about these below)
+ * many more features...
+
+There are a ton of them but the ones that I find the most useful are the
+hook functions which you can read more about
+[here](http://zsh.sourceforge.net/Doc/Release/Functions.html#Hook-Functions).
+I find myself using the hook functions to make my life easier every day when
+working. The first very simple set of things I do with the hooks is to use
+the **chpwd** hook to automatically change the title of my terminal to match
+the name of the directory I'm currently in. In my **.zshrc** I have:
+
+{% highlight bash %}
+set_window_title() { 
+    echo -ne "\033]0;"$PWD"\007"
+}
+
+# set the title on the first pass through here
+set_window_title
+
+# update the console title on directory change
+chpwd() {
+    set_window_title
+}
+{% endhighlight %}
+
+The previous will make it so that your title matches the current working
+directory at all times but it won't handle well the situation where the current
+working directory name is super long. So I've devised a slightly different
+solution where I'll truncate the longer title and put a few dots and show the
+last part of the path which is more important to the user, like so:
+
+{% highlight bash %}
+pad() {
+    if [ ${#1} -lt $2 ]
+    then
+        pad "$1 " "$2"
+    else
+        echo "$1" fi
+}
+
+ltrunc() {
+    FILL="..."
+    if [ "$3" != "" ]
+    then
+        FILL="$3"
+    fi
+    print -P "%$2<$FILL<$1"
+}
+
+lpad_title(){
+    VAR=`ltrunc "$1" 32`
+    pad "$VAR" 32
+}
+
+set_window_title() { 
+    export PREFIX=""
+    if [ "$VIRTUAL_ENV" != "" ] 
+    then
+        VENV=$(basename $VIRTUAL_ENV) 
+        export PREFIX="($VENV)"
+    fi
+
+    STRPATH=`lpad_title "$PWD"`
+    echo -ne "\033]0;"${PREFIX}${STRPATH}"\007"
+}
+{% endhighlight %}
+
+Its definitely more complex but makes for better looking titles when the directo
+name is longer than 32 characters. 
+
+The next trick I like to use is to wrap "long" running commands so I can get
+desktop notifications when the've completed. This can be done on any shell
+really since I just uses **aliases** to achieve the desired effect. This is an
+example implementation:
+
+{% highlight bash %}
+NOTIFY_CMDS=(grunt npm bower git make ant python)
+
+run_cmd() {
+    $@
+    CMD=`echo $@ | tr -d '\r'`
+    RETURN =$?
+    if [ $RETURN == 0 ]
+    then
+        notify-send -t=5000 "Shell" "[$CMD], finished"
+    else
+        notify-send -t=5000 "Shell" "[$CMD], finished with failure"
+    fi
+    return $RETURN
+}
+
+for CMD in "${NOTIFY_CMDS[@]}"
+do
+    alias $CMD="run_cmd $CMD"
+done
+{% endhighlight %}
+
+The above makes it so that the commands in the variable **NOTIFY_CMDS** will be
+aliased to run through the run_cmd function that can then check the return code
+and in my case use **libnotify** through **notify-send** to show the
+notifications on my desktop for those commands and the status of how they
+exited.
+
+So why do I find the notification mechanism above so useful ? Well I like to
+start those long running tasks and then move onto something else while things
+are building, compiling or copying and not have to constantly come back to the
+window to see if the command has completed. With this notification I know I'll
+get a little popup that I can look at quickly and know the result right then and
+there without having to switch back to another window.
