@@ -43,7 +43,7 @@ newly created command line tool.
 
 First thing that is required to write a command line tool is a command line
 parsing library. I choose CmdArgs since I found it worked really well and
-allowed you to easily define the help menu and and summary quite nicely. You can
+allowed you to easily define the help menu and summary quite nicely. You can
 read up on this library [here](http://community.haskell.org/~ndm/cmdargs/).
 
 The **CmdArgs** library is really great at expressing what arguments are
@@ -152,7 +152,7 @@ side **Monads** because it better expresses the imperative sense of the Monadic
 actions. Its not the only way to express monadic actions but seems to be the
 easiest to start with for developers coming from the imperative world. I would
 read up on the other available options when trying to chain monadic actions
-becuase you'll find that **Haskell** has very elegant ways of handling this.
+because you'll find that **Haskell** has very elegant ways of handling this.
 The notation itself allows you to execute separate statements that are not
 necessarily used when generating the output of your function. For example:
 
@@ -179,7 +179,7 @@ understand the first is **>>** which has the signature:
 (>>) :: (Monad m) => m a -> m b -> m b
 {% endhighlight %}
 
-What it does is simply accept two monadic actoins and only return the second,
+What it does is simply accept two monadic actions and only return the second,
 basically ignore the return from the first function. This was necessary since
 we wanted to print the "Input name:" string but didn't care for its return. The
 **>>=** function on the other hand is the function composition function for
@@ -219,7 +219,7 @@ main = interact countlines
 {% endhighlight %}
 
 I just introduced the module declaration line to also show how to correctly
-define your module and tell the ghci compilere which function is your main
+define your module and tell the ghci compiler which function is your main
 entry point. We had to use the **show** function to convert the number
 calculated by our countlines function back into a **String**. With the above you
 should be able to run commands such as:
@@ -270,11 +270,11 @@ main = cmdArgs wc >>= interact . optionHandler
 
 That is a our implementation of the **wc** command line tool (minus the
 counting of bytes and some of the extended options). There are a few more things
-introduced in this implementation tht weren't covered before such as:
+introduced in this implementation that weren't covered before such as:
 
 * **&&&** operator, also called the 'fanout' operator which has the following
 signature ***(&&&) :: a b c -> a b c' -> a b (c, c')*** is basically used to
-apply the two functions to the same arguemnt and return the result which
+apply the two functions to the same argument and return the result which
 consists of the tuples of the results of those two functions. We then created a
 **flat** function to flatten out the result of applying using the **&&&**
 operator.
@@ -283,7 +283,7 @@ operator.
 allows you to basically allows you to define the chars,lines_ and words_
 functions which can be used against the **WC** datatype. Now when pattern
 matching you can use the same function to match the exact element you're looking
-for and thats what we've done above in the **optionHandler** function.
+for and that's what we've done above in the **optionHandler** function.
 
 The most astounding thing about the above piece of code is how many lines we've
 actually had to write. The above code is exactly 34 lines of code (in its
@@ -297,6 +297,6 @@ here is how easy it is to read this code vs reading the same program written
 in C. Just looking at the code above you can see how easy it is to add more
 functionality and also how easy it is to read the program.
 
-In the next post we're going to actualy analyze the performance of the **wc**
+In the next post we're going to actually analyze the performance of the **wc**
 command we wrote and see how close we can get to the performance of the C
 implementation of the wc command.

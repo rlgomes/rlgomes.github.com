@@ -133,7 +133,7 @@ This really irks the renaissance engineer who would like to see the QA team do
 things better and at the same times wants to make sure that the development team 
 isn't a blocker for the QA team in terms of giving them the required testing 
 hooks and or fixing blocking problems first.  The renaissance engineer living 
-in todays day and age, finds him/her self quite frustrated with most of the 
+in today's day and age, finds him/her self quite frustrated with most of the 
 processes being used and how difficult it is to get others to see that if 
 everyone follows a similar process of writing/testing and pushing code then the 
 whole system works better as a whole. 
@@ -250,7 +250,5 @@ to get started on at your current position.
 I also hope that you realize that this writing is in no way a precise account
 of the situation at all companies but certainly reflects my own experiences and 
 the experiences of a few other colleagues in the business and hopefully can 
-help others feel they're not alone or even generate alot of interesting 
+help others feel they're not alone or even generate a lot of interesting 
 conversations.
-
-

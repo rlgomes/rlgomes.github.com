@@ -76,7 +76,7 @@ yes
 That works as expected and gives us the response we're expecting. Here is where
 we can show one of the most powerful features of **Prolog** and that is the
 ability to do inference of your predicates in order to logically fulfill them
-and do things that in other languages would require quite alot of code writing.
+and do things that in other languages would require quite a lot of code writing.
 
 Before we show how inference works lets instead do a trace of the previous usage
 of **append** so we can better understand how inference works. So to trace a
@@ -156,9 +156,9 @@ A = [1,2] ?
 yes
 </console>
 
-We just used our **append**  method to infere what list appended to \[4,5\]
-gives us the list \[1,2,4,5\]. This may not seem ground breaking but think about
-how hard this would be to implement in another language and you'll soon see the
+We just used our **append**  method to infer what list appended to \[4,5\] gives
+us the list \[1,2,4,5\]. This may not seem ground breaking but think about how
+hard this would be to implement in another language and you'll soon see the
 power of inference. If you want to see a quick way that inference can be used,
 lets take the problem:
 
@@ -188,12 +188,12 @@ B = [] ? ;
 no
 </console>
 
-Instead of having the interpret iterate the the possible solutions lets
-introduce the usage of the **findall** predicate which can be used to create a
-**List** of solutions. The predicate itself is defined as
-**findall(Object,Goal,List)** where the **Object** is the elements from the
-**Goal** you wish to put in the **List** for each solution found. So lets just
-show how to use **findall** to get all the solutions in a nice neat little list.
+Instead of having the interpret iterate the possible solutions lets introduce
+the usage of the **findall** predicate which can be used to create a **List** of
+solutions. The predicate itself is defined as **findall(Object,Goal,List)**
+where the **Object** is the elements from the **Goal** you wish to put in the
+**List** for each solution found. So lets just show how to use **findall** to
+get all the solutions in a nice neat little list.
 
 <console>
 | ?- findall((A,B),append(A,B,[1,2,3,4]),List).

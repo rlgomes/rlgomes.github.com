@@ -338,12 +338,12 @@ THEN
 </console>
 
 Its very simple and could use a little tweaking to make it more useful but it
-give syou an immediate sense of what commands are availble for writing tests.
+gives you an immediate sense of what commands are available for writing tests.
 The last thing I'll say about **Freshen** is that it gives you the ability to
 hide a lot of the complexity of how you interact with a given system and allows
-you to express those actions in simple english which can be maintained by
+you to express those actions in simple English which can be maintained by
 someone who doesn't have good coding skills. Another thing about this is that
-you can always change the driving language underneath (ie switch to ruby
+you can always change the driving language underneath (i.e. switch to ruby
 cucumber) without having to change your tests.
 
 I hope this write up has helped you get acquainted with **Freshen** as well as

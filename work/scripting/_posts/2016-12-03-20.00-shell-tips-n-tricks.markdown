@@ -2,7 +2,7 @@
 layout: post
 title: Shell tips and tricks
 published: true
-categories: [shell, bash]
+categories: [shell, zsh]
 ---
 
 Its been a while since I've written a blog post and I thought I'd dedicate this

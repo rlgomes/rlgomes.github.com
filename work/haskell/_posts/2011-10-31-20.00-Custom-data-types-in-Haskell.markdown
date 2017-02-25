@@ -7,7 +7,7 @@ tags: [haskell, data types]
 
 Hopefully after the first post in this series you can quickly write up simple
 functions over existing Haskell types and also understand basic polymorphism as
-well as funciton composition. We'll now start digging into creating custom types
+well as function composition. We'll now start digging into creating custom types
 and how to handle these in our functions. Lets start by creating a Tree type:
 
 {% highlight hs %}

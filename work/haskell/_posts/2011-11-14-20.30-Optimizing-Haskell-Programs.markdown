@@ -49,7 +49,7 @@ bash -c "cat test | build/wc -l"  0.96s user 0.04s system 95% cpu 1.049 total
 
 Which puts at at 24x slower which is already some progress with absolutely no
 code changes. Now the **ghc** compiler also allows you to use a few optimizing
-flags that can help make the output code quicker. Lets use the basie **-O2**
+flags that can help make the output code quicker. Lets use the basic **-O2**
 optimization and see how much we can gain. We'll actually add the compilation
 directive to the **.hs** file with the following line:
 
@@ -140,8 +140,8 @@ bash -c "cat test | build/wc -l"  0.02s user 0.04s system 77% cpu 0.073 total
 </console>
 
 Now we're still 69% slower than the C implementation which means we have room
-for improvmenet, but the interesting part is we're actually 72% faster than the
-C implementation when we have to calculate the numbe of lines, words and
+for improvement, but the interesting part is we're actually 72% faster than the
+C implementation when we have to calculate the number of lines, words and
 characters at the same time:
 
 <console>
@@ -237,7 +237,7 @@ MAIN            MAIN                         1   0    0.0    0.0   100.0   100.0
 </console>
 
 With the above we can now see that we're spending 50% of our time in countlines
-and the other 50% in the main functio which is most likely in the **interact**
+and the other 50% in the main function which is most likely in the **interact**
 function reading the input and 50% of the time parsing and counting in the
 **countlines**. Since we don't have access to the **interact** function what
 we can do is create **cost centres** for the **countlines** function and see if
@@ -288,5 +288,3 @@ Counting chars in a file with 500,000 lines where all lines have 80 columns:
 
 * Ref Implementation: 1.224s
 * Our Implementation: 0.116s
-
-

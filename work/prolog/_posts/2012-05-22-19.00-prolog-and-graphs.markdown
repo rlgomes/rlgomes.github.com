@@ -37,7 +37,7 @@ path(d,g).
 
 Now all we need is to define a simple predicate that can calculate paths by
 composition of existing paths. For example if X is connected to Z and Z is
-connected to Y then there is a path betwen X and Y, which is **Prolog** is
+connected to Y then there is a path between X and Y, which is **Prolog** is
 very similar to the sentence we just wrote:
 
 {% highlight prolog %}
@@ -151,7 +151,7 @@ yes
 Everything so far is working well because the paths are unidirectional and we
 don't have any cycles that would give us troubles. Lets just create a simple
 edge from **g** back to **d**. Now when we run a simple **path(g,f)** you'll
-notice it doens't run out of solutions because it keeps identifying a new path
+notice it doesn't run out of solutions because it keeps identifying a new path
 between **g** and **d** that involves going through the **g** or **d** again. To
 fix this issue we'll have to use a **visited** list and keep track of visited
 nodes, like so:
@@ -232,7 +232,7 @@ findapath(X, Y, W, [X|P], V) :- \+ member(X, V),
                                  W is W1 + W2.
 {% endhighlight %}
 
-The above predicate is a bit more complciated since we're calculating the weight
+The above predicate is a bit more complicated since we're calculating the weight
 and also tracking the exact path we followed till we find the route all the way
 to the **Y** node. With the above predicate you can query with lets say the path
 between **a** and **g** and if you ask **Prolog** to give you other solutions
@@ -282,11 +282,11 @@ term **X** with its value which we then **assertz** into the **Prolog** database
 and then we **fail** so that **Prolog** will back track and find other solutions
 for our **Goal** (which in turn get asserted into the **Prolog** database).
 
-* Once we've finished satisyfing all of the possible solutions for our **Goal**
+* Once we've finished satisfying all of the possible solutions for our **Goal**
 we'll assert one last element into the **Prolog** database that will allow us to
 **collect** the various results with the **collect** predicate.
 
-The **collect** predicate is also quite involed but you just need to understand
+The **collect** predicate is also quite involved but you just need to understand
 something very simple about how it works: It retracts from the **Prolog**
 database in order from the very first **assertz** to the last fact that we
 asserted called **queue(bottom)** at which point its done collecting all of the
@@ -351,14 +351,5 @@ come up with.
 
 An interesting thing I came across that was written using **Prolog** is an
 article on how **IBM** used **Prolog** to do natural language processing for
-their **Jeopardy** winning computer progrm called **Watson**, you can read more
+their **Jeopardy** winning computer program called **Watson**, you can read more
 [here](http://www.cs.nmsu.edu/ALP/2011/03/natural-language-processing-with-prolog-in-the-ibm-watson-system/).
-
-
-
-
-
-
-
-
-

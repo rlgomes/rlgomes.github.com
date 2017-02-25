@@ -5,7 +5,7 @@ published: true
 tags: [android, ant, development]
 ---
 
-When thinking about automatiing the building/testing of an Android project I ran
+When thinking about automating the building/testing of an Android project I ran
 across the necessity to do so from the command line and not using Eclipse. After
 some searching I found that its quite easy to get this done with the tools that
 Android has already available which can generate a simple build.xml file to be

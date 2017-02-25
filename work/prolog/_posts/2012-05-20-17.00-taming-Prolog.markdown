@@ -78,8 +78,8 @@ Lets try to cover another interesting feature in **Prolog** which is the ability
 to add new predicates to your running database or remove existing ones. Which
 means you can now make your predicates dynamic and really get some interesting
 things done in **Prolog**. The 2 predicates used are **asserta/1** and
-**retrace/1** which respectively add and reomove the specified term from the
-**Prolog** database. Lets look at how you'd define the fibonacci function in
+**retrace/1** which respectively add and remove the specified term from the
+**Prolog** database. Lets look at how you'd define the Fibonacci function in
 **Prolog**:
 
 {% highlight prolog %}
@@ -101,13 +101,13 @@ export LOCALSZ=131072
 export GLOBALSZ=131072
 </console>
 
-With the above settings if you start executing our fibonacci example with
+With the above settings if you start executing our Fibonacci example with
 numbers from 1 to 25 you'll notice that the execution time starts to increase
 quite quickly and also the stack size would need to be further made larger to
-be able to calculate the fibnacci of 100. Well the good thing is that we just
+be able to calculate the Fibonacci of 100. Well the good thing is that we just
 learned about **asserta/1** and can basically use the **Prolog** database to
 **memoize** previous results. This is what the new solution could look like and
-this solution can now calculate fibonacci of 100 without any issues:
+this solution can now calculate Fibonacci of 100 without any issues:
 
 {% highlight prolog %}
 :-dynamic(fib/2).

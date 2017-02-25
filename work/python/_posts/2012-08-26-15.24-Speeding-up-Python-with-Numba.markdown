@@ -92,11 +92,11 @@ To understand how this is possible you have to realize what numba is doing is
 converting your array oriented program (ie for loop) and using LLVM to execute
 this as quickly as possible on your hardware which has various elements that
 are actually designed better for array oriented programs and this is what 
-numba is taking advatange of. 
+numba is taking advantage of. 
 
 I just wanted to note this library for future reference as I believe they're on 
 the right path and the ideas in the numba library could be integrated into 
 Python core and allow for these type of optimizations to be done on all code 
-paths, boosting the awesomness of Python.
+paths, boosting the awesomeness of Python.
 
 

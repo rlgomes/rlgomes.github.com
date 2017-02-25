@@ -5,8 +5,8 @@ published: true
 tags: [haskell, functional programming]
 ---
 
-Lets go back a bit to the typeclass topic and analye and understand well a few
-important typeclasses that allow you to do a few intesting things. We'll start
+Lets go back a bit to the typeclass topic and analyze and understand well a few
+important typeclasses that allow you to do a few intestine things. We'll start
 with the **Functor** typeclass, which has the following definition:
 
 {% highlight hs %}
@@ -15,12 +15,11 @@ class Functor f where
 {% endhighlight %}
 
 We've introduced a new notation in our signature with the **f a**, in this
-simple signature we're using the a generic type constructor reference instead
-of a concrete constructor such as **Maybe** or from our previous post **Tree**.
-So when we create an instance of a **Functor f** we basically letting any
-function that wants to use the **Functor** how to apply and reconstruct our
-type. We can see how to easily implement a **Functor** instance for lists,
-like so:
+simple signature we're using a generic type constructor reference instead of a
+concrete constructor such as **Maybe** or from our previous post **Tree**.  So
+when we create an instance of a **Functor f** we basically letting any function
+that wants to use the **Functor** how to apply and reconstruct our type. We can
+see how to easily implement a **Functor** instance for lists, like so:
 
 {% highlight hs %}
 instance Functor [] where
@@ -54,13 +53,13 @@ Main> fmap (+2) sampleTree
 
 This is where I believe you should really start to see the beauty in the way
 that Haskell works with your data types and being able to easily modify,
-transform your types. There are a few other classtypes to look at which include
+transform your types. There are a few other class types to look at which include
 **Foldable**, **Traversable**, etc.
 
-We're now going to have a look at the **Show** and **Read** classtypes. We've
-already seen the **Show** classtype but we want to show the complete function
-here and understand a bit better how this works with the **Read** classtype.
-So here's the full definition of the Show classtype:
+We're now going to have a look at the **Show** and **Read** class types. We've
+already seen the **Show** class type but we want to show the complete function
+here and understand a bit better how this works with the **Read** class type.
+So here's the full definition of the Show class type:
 
 {% highlight hs %}
 class  Show a  where

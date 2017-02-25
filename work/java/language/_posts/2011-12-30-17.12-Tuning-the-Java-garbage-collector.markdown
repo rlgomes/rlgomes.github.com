@@ -6,8 +6,8 @@ tags: [java, gc, tuning]
 ---
 
 Recently, I've found a few situations where when writing a prototype for
-multi-node storage software that I want to be able to gaurantee the stability
-of my performance numbers as the number of concurent requests grows and the JVM
+multi-node storage software that I want to be able to guarantee the stability
+of my performance numbers as the number of concurrent requests grows and the JVM
 is under high stress where the GC kicks in more often and has the unfortunate
 effect of adding higher latency to your requests.
 
@@ -19,7 +19,7 @@ and calculate something complex (log(n)) and then throw away the object.
 
 We will always run the application with the JVM option: **"-Xmx64M"** which
 basically means we can't use more than 64MB during our test runs and this
-allows us to force the GC to kick-in more oftenly. Our slow/bad application
+allows us to force the GC to kick-in more often. Our slow/bad application
 can be as simple as:
 
 {% highlight java %}
@@ -145,7 +145,7 @@ gotten this "additional boost in performance" by now spending just 4ms per GC.
 
 In general you don't go about fiddling with the garbage collector unless you've
 noticed your application isn't behaving as you would expect it to and that
-you're unable to gaurantee stable performance behavior and after some
+you're unable to guarantee stable performance behavior and after some
 investigation have found that the GC is in fact to be "blamed". There are
 plenty of other situations in which tuning the GC can lead to a better
 performing Java application but I just wanted to show that even a badly written

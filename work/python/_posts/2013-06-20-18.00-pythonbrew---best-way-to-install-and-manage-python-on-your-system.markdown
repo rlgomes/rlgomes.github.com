@@ -70,7 +70,7 @@ Installed Python-2.4.6 successfully. Run the following command to switch to Pyth
   pythonbrew switch 2.4.6
 </console> 
 
-Checking what versions are curently avaiable is also very easy:
+Checking what versions are currently available is also very easy:
 
 <console>
 > pythonbrew list

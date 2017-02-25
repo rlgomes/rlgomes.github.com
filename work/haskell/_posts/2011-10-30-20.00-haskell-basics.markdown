@@ -18,12 +18,12 @@ main = putStrLn "Hello, World!"
 That is a pretty small program even when you compare to writing hello world in
 an imperative language such as C. I added the shebang to make sure you'd be
 able to easily run this on a unix system. To run this you'll need to install
-GHC compiler and intpreter which are supported on all major OS's. For more
+GHC compiler and interpreter which are supported on all major OS's. For more
 information on getting GHC on your system have a look at:
 http://www.haskell.org/ghc/ .
 
 Lets get into what makes a piece of code in Haskell. So unlike most mainstream
-languages that are imperative or object-oriented, functionl programming
+languages that are imperative or object-oriented, functional programming
 languages do not have the notion of a sequence of commands/instructions to
 execute. A functional programming language consists of a collection of functions
 that do a single task and return a result without any side-effects. I'm bringing
@@ -55,7 +55,7 @@ plus1 a = a + 1
 {% endhighlight %}
 
 As you look at this function you'll find the notation is very similar to when
-you were writing mathematical expressions in school. Of couse now that we have
+you were writing mathematical expressions in school. Of course now that we have
 this function lets load it into the ghci shell and try to apply it to a few
 different values:
 
@@ -109,7 +109,7 @@ the type of this function:
 len :: [Int] -> Int
 {% endhighlight %}
 
-The above signature is aready length takes a list of Ints and returns an Int.
+The above signature is already length takes a list of Ints and returns an Int.
 We can easily take this a step further and make this function polymorphic which
 allows it to be applied to a list of any type. The signature would look like so:
 
@@ -130,7 +130,7 @@ This definition reads very simply: the length of an empty list is 0 and the
 length of a list with an element x and a tail xs is equal to the length of the
 tail plus one. We've introduced here how to do pattern matching on lists and
 also how polymorphism works when you want to create methods that can be used
-against various datatypes that share a common structure. The len function shown
+against various data types that share a common structure. The len function shown
 can be used against a list of integers as well as a string which is a list
 of Chars. Here's an example:
 
@@ -176,7 +176,7 @@ function might look:
 f . g = \x -> f(g(x))
 {% endhighlight %}
 
-We've suddenly introduced 2 other concepts with this defintion:
+We've suddenly introduced 2 other concepts with this definition:
 
 * **infix functions** - By default functions are defined in a prefix manner
 which means the function name appears before the arguments. When you want to
@@ -228,10 +228,9 @@ middle = tail . init
 
 By now you can see that the Haskell language is extremely powerful and allows
 you to take existing functions and put them together in a very simple way that
-alows you to create new and useful functions quickly and cleanly.
+allows you to create new and useful functions quickly and cleanly.
 
 In my next post I'll start to dive into custom data types and how to pattern
 match those when writing your own functions and hopefully get into representing
-Trees, Graphs and other datatypes and how writing functions for those in a
+Trees, Graphs and other data types and how writing functions for those in a
 functional language is extremely clean and simple.
-

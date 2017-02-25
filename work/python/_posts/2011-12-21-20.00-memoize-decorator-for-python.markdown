@@ -15,7 +15,7 @@ that takes a while and would render the exact same result.
 
 Adding the memoization/caching feature to your function isn't hard but 
 immediately I found it made the whole function look ugly and cluttered, and I 
-was not satsified with that. Luckily I was using python which has a feature 
+was not satisfied with that. Luckily I was using python which has a feature 
 called decorators which allow you to easily add more "functionality" to an 
 existing function without cluttering its "code space". 
 
@@ -26,6 +26,6 @@ features including the ability to handle functions with lists or other objects
 as arguments. So I set out to create my own memoize module that could be easily
 used in other projects without having to clutter my code with "memoization" code.
 
-I built the memoize module that is now availabe [here](https://github.com/rlgomes/memoize)
+I built the memoize module that is now available [here](https://github.com/rlgomes/memoize)
 and the README included has enough information on how to use this in your own 
 project.

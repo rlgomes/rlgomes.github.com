@@ -5,7 +5,7 @@ published : true
 tags : [prolog, development, logic]
 ---
 
-I wanted to review my prolog skills an at the same time write up a quick set of
+I wanted to review my Prolog skills an at the same time write up a quick set of
 posts on how to use Prolog to get certain tasks done in a more efficient manner.
 This first post is about going over how you write a basic Prolog program and
 how to wrap your mind around this "different" programming paradigm.
@@ -14,7 +14,7 @@ Prolog is a logic programming language based that uses facts and rules to
 evaluate if what you are trying to compute is true or false logically. These
 facts and rules are loaded into what is usually called the **Prolog** database
 and then you can query them in order to get the answers to the questions that
-you want to solve. The most basic thing you can define in prolog is a fact and
+you want to solve. The most basic thing you can define in Prolog is a fact and
 a fact has the form:
 
 {% highlight prolog %}
@@ -121,12 +121,12 @@ true ?
 yes
 </console>
 
-You may have noticed that when verifying that alice and bob were siblings you
+You may have noticed that when verifying that Alice and Bob were siblings you
 got a slightly different prompt. This new prompt identifies that there is one
-way to verify that alice and bob are siblings and if you hit just enter you
-don't have any interest in additional solutiosn but if you hit ';' followed by
+way to verify that Alice and Bob are siblings and if you hit just enter you
+don't have any interest in additional solutions but if you hit ';' followed by
 enter the **Prolog** engine will try to verify alternate ways of evaluating that
-alice and bob are siblings. We'll go into more details on the alternate routes
+Alice and Bob are siblings. We'll go into more details on the alternate routes
 to verify the same predicate in future posts.
 
 Lets make a quick introduction into lists and how **Prolog** represents and uses
@@ -205,5 +205,3 @@ I would advise you to go and play with the interpreter and defining other
 
 In the following post I will be looking at the built in functions and how to
 assert and retract facts from the **Prolog** database.
-
-

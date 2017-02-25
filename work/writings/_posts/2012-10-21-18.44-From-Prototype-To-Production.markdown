@@ -65,9 +65,9 @@ and we'll basically start a response with a **+** on success followed by a singl
 line response, or we'll start with **-** if there was an error followed by a
 single line with the error message.
 
-We now have to decide what we'll use to build the protocol server on and c
-urrently one of the most flexible and best performant ones in the Python world 
-is **Twisted** which can be used to easliy create your own custom protocol or 
+We now have to decide what we'll use to build the protocol server on and
+currently one of the most flexible and best performant ones in the Python world 
+is **Twisted** which can be used to easily create your own custom protocol or 
 better yet used to easily build your own HTTP, FTP, etc server in minutes. I 
 had to brush up on my knowledge of **Twisted** and how to create my own custom
 protocol and after reading through the documentation for some 15 minutes I found
@@ -106,7 +106,7 @@ reactor.run()
 
 This of course is just an example of how you can use twisted to make a line
 reading protocol handler. Now lets actually use this to read our new custom 
-protocol which is a multiline protocol that needs to reconstruct each command
+protocol which is a multi-line protocol that needs to reconstruct each command
 from the multiple lines that it is broken up into on the wire.
 
 Now even before we start writing the actual server handler code lets first 
@@ -163,9 +163,9 @@ if __name__ == '__main__':
     unittest.main()
 {% endhighlight %}
 
-There is quite a lot of test code displayed there but thats because we had to 
+There is quite a lot of test code displayed there but that's because we had to 
 create those helper methods for sending commands and receiving responses. The
-actualy test itself is just 3 lines to send a **SET** command verify with a 
+actually test itself is just 3 lines to send a **SET** command verify with a 
 **GET** command that the current server recorded our 100 value correctly.
 
 We're now back to the server code because we now need to restructure our 
@@ -213,8 +213,8 @@ class CommandReader(LineReceiver):
             self.expected_arguments -= 1
 {% endhighlight %}
 
-Of course if we run our test agains this server it thinks it has stored data and
-will fail to retrieve the desired data becuase we're always responding with 'OK'
+Of course if we run our test against this server it thinks it has stored data and
+will fail to retrieve the desired data because we're always responding with 'OK'
 as you can see here:
 
 <console>
@@ -235,7 +235,7 @@ FAILED (failures=1)
 </console>
 
 Lets take our current implementation and make the **CommandReceiver** smart
-enough to look upthe correctly handler based on the command name supplied and
+enough to look up the correctly handler based on the command name supplied and
 return the response that the handling function returns.
 
 After some debugging and restructuring the code a bit as I made changes and 
@@ -309,7 +309,7 @@ Now I have a working prototype that can actually do set and get requests and
 save that information into memory at runtime. At this point its 16:30 on 
 October the 14th, 2012 and with writing the unit test and writing the code I've 
 spent just a little over an hour and a half to have a working prototype that 
-could be used by a depdendent service to start integrating against. 
+could be used by a dependent service to start integrating against. 
 
 What we'll focus on next is using tools such as **pylint** to identify problems
 in the code as well as using **setuptools** to create a setup script that can 
@@ -409,12 +409,12 @@ for example in this case a docstring to tell **pylint** to be quiet. The score
 given to your code is an interesting way of showing developers if their code is 
 up to par with how **Python** code should be written and maintained.
 
-Lets add thos docstrings and silence the missing member functions tha we know
+Lets add those docstrings and silence the missing member functions that we know
 are in fact there. With a subsequent rerun of **pylint** I now have a score of
 7.45 which is a pretty decent score. Something like pylint should be used in 
 order to make sure that the code quality doesn't degrade drastically with time
 and that certain levels of code quality and proper code writing are maintained
-acrosss the team.
+across the team.
 
 We're now at a stage where others are already able to install and use our code
 and need to continue adding features to our existing service while making sure
@@ -432,7 +432,7 @@ muck around in the kvsserver module. While doing this I also created a few more
 test to verify the set, get and new del operation all work correctly.
 
 We now have the full API available with a few additional unit tests that verify
-the various use cases for set/get and delete operations. I also spent somtime
+the various use cases for set/get and delete operations. I also spent sometime
 and created a very simple set of performance tests to have an idea of how 
 well this whole thing performs. To create the basic performance tests I first 
 created a **BaseTest** test case to build that had the earlier used **send**
@@ -619,7 +619,7 @@ changes. here is the lines of test code vs lines of product code comparison:
 
 Now I personally don't care if I have more product code than test code because
 to me test code is valuable code that allows me as a developer to actually 
-write code that can be used by others and gaurantees my code at least does what
+write code that can be used by others and guarantees my code at least does what
 I was originally intending.
 
 **STOP 16:46 on October 21st, 2012**
@@ -675,4 +675,3 @@ same ideas to any of your projects and allow yourself to be a more efficient
 engineer and also allow you to produce better code.
 
 The code written during this writing can be cloned from [here](https://github.com/rlgomes/kvs)
-
