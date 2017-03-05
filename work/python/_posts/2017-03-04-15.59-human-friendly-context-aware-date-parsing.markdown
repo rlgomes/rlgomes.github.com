@@ -1,0 +1,50 @@
+---
+layout: post
+title: delta - human friendly context aware duration parsing library
+published: true
+categories: [python, date, parsing]
+---
+
+Recently needed the ability to parse durations from human readable strings that
+were also context aware. The context being the date to start your duration
+calculation from so that if you started on January 1st 2017 and wanted 2 months
+you'd get exactly 31 (number of days in January 2017) + 28 (number of days in
+February).  Then if I gave it the context of April 1st I'd get 61 days since
+there were two months with 31 days each.
+
+I tried to find an existing library with no luck so I wrote `delta` to take care
+of the job and hopefully someone else would find it of use. You can get your
+hands on delta easily through [pypi](https://pypi.python.org/pypi) like so:
+
+```
+pip install delta
+```
+
+Once installed you can use it like so:
+
+```python
+import delta
+
+from datetime import datetime
+
+print(delta.parse('1 year 2 months and 3 days'))
+print(delta.parse('2 months and 3.5 weeks', datetime(2017, 3, 4)))
+```
+
+You can see that `delta` allows you to easily include a context or not and when
+you don't supply the context it will assume the current date. Another thing you
+may have noticed is you can get quite expressive with the duration expressions
+being able to do all of the following:
+
+```
+1 year 2 months and 3 weeks
+2 months, 3 weeks and 12 days
+1y 2m 3w 4d
+3.5 years and 2.7 days
+```
+
+`delta` will handle all of those without any issues.
+
+If you find `delta` useful then head over to the [github](https://github.com/rlgomes/delta)
+project and open any issues or contribute a PR for any additional features you'd
+like.
