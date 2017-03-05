@@ -1,6 +1,6 @@
 ---
 layout: post
-title: delta - human friendly context aware duration parsing library
+title: Human friendly context aware duration parsing library
 published: true
 categories: [python, date, parsing]
 ---
