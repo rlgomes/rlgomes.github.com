@@ -1,0 +1,127 @@
+---
+layout: post
+title: is numpy really that much faster ?
+published: true
+categories: [numpy,python,python3]
+---
+
+**numpy** has been the rage for quite sometime within the python community and I
+have yet to find a nice write up that really compares the performance of using
+**numpy** vs regular python lists to get specific tasks done so I decided on
+writing up a quick and dirty comparison.
+
+First lets simply compare the amount of memory required to store 1 million
+integers in a **python** list vs 1 million integers in a **numpy** array:
+
+```python
+from memory_profiler import profile
+
+@profile
+def main():
+    data = [0 for _ in range(0, 1000000)]
+
+if __name__ == '__main__':
+    main()
+```
+
+and in **numpy**:
+
+```python
+from memory_profiler import profile
+
+import numpy as np
+
+@profile
+def main():
+    data = np.zeros(1000000)
+
+if __name__ == '__main__':
+    main()
+```
+
+We used the neat little library [memory_profiler](https://pypi.python.org/pypi/memory_profiler)
+to take care of profiling memory usage for the `main()` function and in this one
+little test we can already see the tremendous benefits of using **numpy** over
+traditional python lists:
+
+
+```bash
+> python 1_million_python_list.py
+Filename: 1_million_python_list.py
+
+Line #    Mem usage    Increment   Line Contents
+================================================
+     3     13.1 MiB      0.0 MiB   @profile
+     4                             def main():
+     5     21.0 MiB      7.9 MiB       data = [ 0 for _ in range(0, 1000000)]
+
+
+2017-04-02 15:25:09 $?=0 pwd=/home/rlgomes/workspace/python3/numpy venv=env duration=65.931s                 
+```
+
+vs
+
+```bash
+> python 1_million_numpy_array.py
+Filename: 1_million_numpy_array.py
+
+Line #    Mem usage    Increment   Line Contents
+================================================
+     5     26.1 MiB      0.0 MiB   @profile
+     6                             def main():
+     7     26.4 MiB      0.3 MiB       data = np.zeros(1000000)
+
+
+2017-04-02 15:23:57 $?=0 pwd=/home/rlgomes/workspace/python3/numpy venv=env duration=.290s                                                                                          
+```
+
+Which in terms of time to execute **numpy** is 227x faster and in terms of memory
+usage it is 26x more efficient.
+
+Now what if we assume the list already exists in memory and we don't care about
+the time it took to load it or even how much space it occupies what happens when
+we try to calculate statistics over the million integers:
+
+```python
+import timeit
+import random
+
+import numpy as np
+
+python_list = [random.random() for _ in range(0, 1000000)]
+numpy_array = np.array(python_list)
+
+elapsed = timeit.timeit('sum(python_list)', number=100, globals=locals())
+print('%.5fs for python sum(list)' % elapsed)
+
+elapsed = timeit.timeit('np.sum(numpy_array)', number=100, globals=locals())
+print('%.5fs for python numpy.sum(array)' % elapsed)
+
+elapsed = timeit.timeit('max(python_list)', number=100, globals=locals())
+print('%.5fs for python max(list)' % elapsed)
+
+elapsed = timeit.timeit('np.amax(numpy_array)', number=100, globals=locals())
+print('%.5fs for python numpy.amax(array)' % elapsed)
+```
+
+The above gives the following output on my machine:
+
+```bash
+> python million_integer_stats.py
+0.56150s for python sum(list)
+0.06869s for python numpy.sum(array)
+2.05134s for python max(list)
+0.06859s for python numpy.amax(array)
+```
+
+Which puts **numpy** at 8x faster at calculating the sum of a million integers
+and at 29.9x faster at calculating the maximum value.
+
+Any other comparisons will surely continue to show just how much more efficient
+**numpy** is at statistical analysis and there are a ton of more functionality
+the library has to offer from operating on matrices to fitting polynomials to
+existing data.
+
+The main thing to takeaway from this post is to use **numpy** when you are doing
+any kind of math over hundreds of thousands of numbers as it will perform much
+better and remove the need for coding up your own statistical functions.
