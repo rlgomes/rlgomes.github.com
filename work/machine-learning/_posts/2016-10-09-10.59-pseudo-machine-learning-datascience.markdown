@@ -1,6 +1,6 @@
 ---
 layout: post
-title: pseudo machine learning
+title: Pseudo machine learning
 published: true
 categories: [python, machine learning, prediction]
 ---

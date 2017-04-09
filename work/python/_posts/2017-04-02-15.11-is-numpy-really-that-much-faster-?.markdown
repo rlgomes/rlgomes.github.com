@@ -1,6 +1,6 @@
 ---
 layout: post
-title: is numpy really that much faster ?
+title: Is numpy really that much faster ?
 published: true
 categories: [numpy,python,python3]
 ---

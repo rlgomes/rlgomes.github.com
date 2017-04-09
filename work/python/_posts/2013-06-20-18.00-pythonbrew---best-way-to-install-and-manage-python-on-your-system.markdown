@@ -1,6 +1,6 @@
 ---
 layout: post
-title: pythonbrew - the best way to install and manage python on your system
+title: Pythonbrew - the best way to install and manage python on your system
 published: true
 categories: [python,brew,install]
 ---
